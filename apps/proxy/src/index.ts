@@ -3,10 +3,14 @@ import * as http from 'http';
 import httpProxy from 'http-proxy';
 import { Client } from 'pg';
 import axios from 'axios';
+import Redis from 'ioredis';
 
 const proxy = httpProxy.createProxyServer({});
 const PORT = process.env.PORT || 8080;
 const API_URL = process.env.API_URL || 'http://localhost:3000';
+
+// Redis Client
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 // DB Configuration (Keep for fast site lookup)
 const client = new Client({
@@ -26,8 +30,29 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+        // 0. Global Rate Limiting using Redis (Infrastructure Protection)
+        const limit = 200; // requests per minute
+        const window = 60;
+        const key = `ratelimit:${ip}`;
+
+        try {
+            const current = await redis.incr(key);
+            if (current === 1) {
+                await redis.expire(key, window);
+            }
+            if (current > limit) {
+                res.writeHead(429);
+                res.end('ShieldDOS: Too Many Requests');
+                // We return immediately to save resources
+                return;
+            }
+        } catch (redisError) {
+            console.error('Redis Error:', redisError);
+            // Continue if Redis fails (fail-open)
+        }
+
         // 1. Check if site exists in DB
-        const result = await client.query('SELECT * FROM site WHERE domain = $1', [host.split(':')[0]]); // Simple strict match, ignore port
+        const result = await client.query('SELECT * FROM site WHERE domain = $1', [host.split(':')[0]]);
         const site = result.rows[0];
 
         if (!site) {
@@ -79,13 +104,14 @@ const server = http.createServer(async (req, res) => {
         // 5. Proxy Request
         // Handle target protocol (http vs https)
         const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+        const changeOrigin = true; // Always true for named hosts
 
         console.log(`[Proxy] Routing ${host}${req.url} -> ${target}`);
 
         proxy.web(req, res, {
             target,
-            changeOrigin: true, // Needed for virtual hosted sites
-            secure: false       // Allow self-signed certs just in case
+            changeOrigin,
+            secure: false
         }, (err) => {
             console.error('[Proxy Error] Upstream failed:', err);
             if (!res.headersSent) {
