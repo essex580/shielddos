@@ -37,6 +37,7 @@ services:
     command: npm run dev
     restart: always
     environment:
+      DATABASE_URL: postgres://shield_user:shield_password@postgres:5432/shield_db
       API_URL: http://api:3000
       PORT: 8080
     ports:

@@ -76,13 +76,13 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800 text-slate-300">
-              <tr v-for="log in logs" :key="log.id" class="hover:bg-slate-800/30 transition-colors">
+              <tr v-for="log in paginatedLogs" :key="log.id" class="hover:bg-slate-800/30 transition-colors animate-fade-in-down">
                 <td class="p-3 pl-4 text-slate-500">{{ new Date(log.timestamp).toLocaleTimeString() }}</td>
                 <td class="p-3 font-mono text-xs">{{ log.method }}</td>
                 <td class="p-3 font-mono text-xs truncate max-w-[200px]" :title="log.path">{{ log.path }}</td>
                 <td class="p-3 font-mono text-xs">{{ log.ipAddress }}</td>
                 <td class="p-3">
-                  <span :class="log.statusCode >= 500 ? 'text-rose-400' : log.statusCode >= 400 ? 'text-amber-400' : 'text-emerald-400'" class="font-bold">
+                  <span :class="log.blocked ? 'text-rose-500' : log.statusCode >= 500 ? 'text-rose-400' : log.statusCode >= 400 ? 'text-amber-400' : 'text-emerald-400'" class="font-bold">
                     {{ log.statusCode }}
                   </span>
                 </td>
@@ -92,6 +92,19 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Pagination Controls -->
+        <div class="p-3 border-t border-slate-800 flex justify-between items-center bg-slate-900/30">
+            <span class="text-xs text-slate-500">Page {{ currentPage }} of {{ totalPages || 1 }} ({{ logs.length }} total)</span>
+            <div class="flex gap-2">
+                <button @click="prevPage" :disabled="currentPage === 1" class="p-1 rounded bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                    <ChevronLeft class="w-4 h-4" />
+                </button>
+                <button @click="nextPage" :disabled="currentPage === totalPages" class="p-1 rounded bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                    <ChevronRight class="w-4 h-4" />
+                </button>
+            </div>
         </div>
       </div>
 
@@ -116,9 +129,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
-import { Activity, RefreshCw, BarChart3, ShieldAlert, Globe, Users, List, Zap } from 'lucide-vue-next';
+import { io, Socket } from 'socket.io-client'
+import { Activity, RefreshCw, BarChart3, ShieldAlert, Globe, Users, List, Zap, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 interface Log {
   id: string;
@@ -139,6 +153,28 @@ const stats = ref({
 
 const logs = ref<Log[]>([])
 const loading = ref(false)
+const socket = ref<Socket | null>(null)
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = 10
+
+const paginatedLogs = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return logs.value.slice(start, end)
+})
+
+const totalPages = computed(() => Math.ceil(logs.value.length / itemsPerPage))
+
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+    if (currentPage.value > 1) currentPage.value--
+}
+
 const topIps = computed(() => {
   const counts: Record<string, number> = {};
   logs.value.forEach(l => {
@@ -155,19 +191,13 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const fetchData = async () => {
     loading.value = true;
     try {
-        // Fetch sites
         const siteRes = await axios.get(`${API_URL}/sites`);
         stats.value.activeSites = siteRes.data.filter((s: any) => s.isActive).length;
 
-        // Fetch logs
         const logRes = await axios.get(`${API_URL}/analytics`);
-        logs.value = logRes.data;
-
-        // Calc stats from logs
-        stats.value.totalRequests = logs.value.length;
-        stats.value.blocked = logs.value.filter(l => l.blocked).length;
-        stats.value.uniqueIps = new Set(logs.value.map(l => l.ipAddress)).size;
-
+        logs.value = logRes.data; // Should handle large data better in future (server-side pagination)
+        
+        updateStats();
     } catch (e) {
         console.error("Error fetching dashboard data", e);
     } finally {
@@ -175,9 +205,31 @@ const fetchData = async () => {
     }
 }
 
+const updateStats = () => {
+    stats.value.totalRequests = logs.value.length;
+    stats.value.blocked = logs.value.filter(l => l.blocked).length;
+    stats.value.uniqueIps = new Set(logs.value.map(l => l.ipAddress)).size;
+}
+
 onMounted(() => {
-    fetchData()
-    // Auto refresh every 5s
-    setInterval(fetchData, 5000);
+    fetchData();
+
+    // WebSocket Init
+    socket.value = io(API_URL);
+    
+    socket.value.on('connect', () => {
+        console.log('Connected to WebSocket');
+    });
+
+    socket.value.on('new_traffic', (data: any) => {
+        // Add new log to top
+        logs.value.unshift(data);
+        // Update stats
+        updateStats();
+    });
+})
+
+onUnmounted(() => {
+    if (socket.value) socket.value.disconnect();
 })
 </script>
