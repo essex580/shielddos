@@ -4,7 +4,6 @@
       <ShieldCheck class="w-6 h-6 text-white" />
       <div>
         <h1 class="text-sm font-bold text-white tracking-tight uppercase">SHIELD<span class="text-zinc-600">DOS</span></h1>
-        <p class="text-[10px] text-zinc-500">v2.0.0-terminal</p>
       </div>
     </div>
     
@@ -39,17 +38,17 @@
     </nav>
 
     <div class="p-4 border-t border-zinc-800 bg-zinc-950">
-      <div class="flex items-center space-x-3 mb-4 p-2 border border-zinc-800">
-        <div class="w-8 h-8 bg-zinc-900 flex items-center justify-center border border-zinc-800">
+      <div class="flex items-center space-x-3 mb-4 p-2 border border-zinc-800 rounded-md">
+        <div class="w-8 h-8 bg-zinc-900 flex items-center justify-center border border-zinc-800 rounded-md">
             <User class="w-4 h-4 text-zinc-500" />
         </div>
         <div class="flex flex-col">
-          <span class="text-xs font-bold text-white uppercase">root_user</span>
-          <span class="text-[10px] text-zinc-600">SSH-256</span>
+          <span class="text-xs font-bold text-white uppercase">Administrator</span>
+          <span class="text-[10px] text-zinc-600">Admin</span>
         </div>
       </div>
-      <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-zinc-900 hover:bg-white hover:text-black text-zinc-400 border border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider">
-        <LogOut class="w-3 h-3" />
+      <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800 rounded-md transition-colors text-xs font-medium tracking-wider">
+        <LogOut class="w-4 h-4" />
         <span>Logout</span>
       </button>
     </div>

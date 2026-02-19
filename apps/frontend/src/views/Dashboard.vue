@@ -2,15 +2,15 @@
   <div class="p-6 space-y-6 max-w-full font-mono text-sm">
     <header class="flex justify-between items-end pb-4 border-b border-zinc-800">
       <div>
-        <h2 class="text-xl font-bold text-white flex items-center gap-3 uppercase tracking-widest">
-          <Activity class="w-5 h-5 text-zinc-500" /> SYSTEM_STATUS
+        <h2 class="text-xl font-bold text-white flex items-center gap-3">
+          <Activity class="w-5 h-5 text-blue-500" /> System Status
         </h2>
-        <p class="text-zinc-500 mt-1 text-xs">Traffic monitoring and intrusion detection system.</p>
+        <p class="text-zinc-500 mt-1 text-xs">Traffic monitoring and intrusion detection.</p>
       </div>
       <div class="flex space-x-3">
-        <button @click="fetchData" class="terminal-button-outline flex items-center gap-2 text-xs uppercase tracking-wider">
+        <button @click="fetchData" class="terminal-button-outline flex items-center gap-2 text-xs font-semibold">
           <RefreshCw class="w-3 h-3" :class="{ 'animate-spin': loading }" /> 
-          SYNC_DATA
+          Refresh
         </button>
       </div>
     </header>
@@ -19,43 +19,43 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="terminal-card">
         <div class="flex items-center justify-between mb-4">
-          <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">TOTAL_REQ</p>
+          <p class="text-zinc-500 text-xs font-semibold">Total Requests</p>
           <BarChart3 class="w-4 h-4 text-zinc-600" />
         </div>
         <h3 class="text-3xl font-bold text-white">{{ stats.totalRequests }}</h3>
-        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">BUFFER: 100</span>
+        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">Last 24h</span>
       </div>
       
       <div class="terminal-card">
         <div class="flex items-center justify-between mb-4">
-          <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">THREATS_BLOCKED</p>
+          <p class="text-zinc-500 text-xs font-semibold">Threats Blocked</p>
           <ShieldAlert class="w-4 h-4 text-zinc-600" />
         </div>
         <h3 class="text-3xl font-bold text-white">{{ stats.blocked }}</h3>
         <span class="text-zinc-600 text-[10px] mt-2 block font-medium uppercase" v-if="stats.blocked > 0">
-           <span class="text-white bg-zinc-800 px-1">DETECTED</span>
+           <span class="text-white bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded-sm">Detected</span>
         </span>
         <span class="text-zinc-600 text-[10px] mt-2 block font-medium uppercase" v-else>
-           <span class="text-zinc-500">SECURE</span>
+           <span class="text-green-500">Secure</span>
         </span>
       </div>
       
       <div class="terminal-card">
         <div class="flex items-center justify-between mb-4">
-          <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">ACTIVE_NODES</p>
+          <p class="text-zinc-500 text-xs font-semibold">Active Nodes</p>
           <Globe class="w-4 h-4 text-zinc-600" />
         </div>
         <h3 class="text-3xl font-bold text-white">{{ stats.activeSites }}</h3>
-        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">DOMAINS UP</span>
+        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">Domains Up</span>
       </div>
       
       <div class="terminal-card">
         <div class="flex items-center justify-between mb-4">
-          <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">UNIQUE_IV</p>
+          <p class="text-zinc-500 text-xs font-semibold">Unique IPs</p>
           <Users class="w-4 h-4 text-zinc-600" />
         </div>
         <h3 class="text-3xl font-bold text-white">{{ stats.uniqueIps }}</h3>
-        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">IP_ADDR</span>
+        <span class="text-zinc-600 text-[10px] mt-2 block font-medium">Visitors</span>
       </div>
     </div>
 
@@ -63,8 +63,8 @@
       
       <!-- Chart Section -->
       <div class="lg:col-span-3 terminal-card min-h-[350px]">
-        <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-xs uppercase tracking-widest border-b border-zinc-800 pb-2">
-            <Activity class="w-4 h-4 text-zinc-500" /> TRAFFIC_FLOW // REQ_PER_SEC
+        <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
+            <Activity class="w-4 h-4 text-blue-500" /> Traffic Flow
         </h3>
         <div class="h-64 w-full">
             <Line :data="chartData" :options="chartOptions" />
@@ -74,23 +74,23 @@
       <!-- Recent Calls Feed -->
       <div class="lg:col-span-2 terminal-card flex flex-col p-0 overflow-hidden">
         <div class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
-          <h3 class="font-bold text-white flex items-center gap-2 text-xs uppercase tracking-widest">
-            <List class="w-4 h-4 text-zinc-500" /> EVENT_LOG
+          <h3 class="font-bold text-white flex items-center gap-2 text-sm">
+            <List class="w-4 h-4 text-blue-500" /> Event Log
           </h3>
-          <div class="flex items-center gap-2 text-[10px] text-zinc-500 uppercase">
-             <span class="w-2 h-2 bg-white animate-pulse"></span> LIVE
+          <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-semibold uppercase">
+             <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Live
           </div>
         </div>
         <div class="overflow-x-auto flex-1">
           <table class="w-full text-left text-xs font-mono">
-            <thead class="bg-zinc-900/50 text-zinc-500 font-bold border-b border-zinc-800 uppercase tracking-wider">
+            <thead class="bg-zinc-900/50 text-zinc-500 font-semibold border-b border-zinc-800 text-xs">
               <tr>
-                <th class="p-3 pl-4">TIMESTAMP</th>
-                <th class="p-3">METHOD</th>
-                <th class="p-3">PATH</th>
-                <th class="p-3">SRC_IP</th>
-                <th class="p-3">GEO</th>
-                <th class="p-3">CODE</th>
+                <th class="p-3 pl-4">Time</th>
+                <th class="p-3">Method</th>
+                <th class="p-3">Path</th>
+                <th class="p-3">IP Address</th>
+                <th class="p-3">Country</th>
+                <th class="p-3">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-zinc-800 text-zinc-400">
@@ -111,15 +111,17 @@
                 <td class="p-3 text-zinc-500">{{ log.ipAddress }}</td>
                 <td class="p-3 text-zinc-600">{{ log.country || 'N/A' }}</td>
                 <td class="p-3">
-                  <span v-if="log.blocked" class="text-red-500 font-bold">BLOCKED</span>
-                  <span v-else :class="log.statusCode >= 500 ? 'text-red-500' : log.statusCode >= 400 ? 'text-yellow-500' : 'text-green-500'" class="font-bold">
+                  <span v-if="log.blocked" class="text-red-500 bg-red-900/20 px-2 py-0.5 rounded-md font-semibold text-[10px]">
+                      {{ log.statusCode === 429 ? 'Rate Limited' : log.statusCode === 403 ? 'WAF/Bot Blocked' : 'Blocked' }}
+                  </span>
+                  <span v-else :class="log.statusCode >= 500 ? 'text-red-500' : log.statusCode >= 400 ? 'text-yellow-500' : 'text-green-500'" class="font-semibold text-[11px] bg-zinc-900 px-2 py-0.5 rounded-md">
                     {{ log.statusCode }}
                   </span>
                 </td>
               </tr>
                <tr v-if="logs.length === 0">
-                <td colspan="6" class="p-8 text-center text-zinc-600">
-                    // NO_DATA_RECEIVED
+                <td colspan="6" class="p-8 text-center text-zinc-500">
+                    No data available
                 </td>
               </tr>
             </tbody>
@@ -142,8 +144,8 @@
 
       <!-- Top Attacking IPs / Stats -->
       <div class="terminal-card h-fit">
-        <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-xs uppercase tracking-widest border-b border-zinc-800 pb-2">
-          <Zap class="w-4 h-4 text-zinc-500" /> TRAFFIC_SOURCES
+        <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
+          <Zap class="w-4 h-4 text-blue-500" /> Traffic Sources
         </h3>
         <div class="space-y-1">
              <div v-for="(ip, index) in topIps" :key="ip.ip" class="flex justify-between items-center bg-zinc-900/50 p-2 border border-zinc-800/50 hover:bg-zinc-900 transition-colors">
@@ -153,8 +155,8 @@
                 </div>
                 <span class="text-white text-xs bg-zinc-800 px-1.5 py-0.5">{{ ip.count }}</span>
              </div>
-             <div v-if="topIps.length === 0" class="text-zinc-600 text-center text-[10px] py-4 border border-dashed border-zinc-800">
-                 // NO_SOURCE_DATA
+             <div v-if="topIps.length === 0" class="text-zinc-500 text-center text-xs py-4 border border-zinc-800 rounded-md">
+                 No source data
              </div>
         </div>
       </div>

@@ -20,9 +20,38 @@ const client = new Client({
 
 client.connect().catch(err => console.error('DB Connection Error:', err));
 
+import { isBot } from './middleware/bot-filter.middleware';
+import { handleChallenge } from './middleware/challenge.middleware';
+import { isWafAttack } from './middleware/waf.middleware';
+import { serveCachedResponse, interceptAndCacheResponse } from './middleware/cache.middleware';
+
+// Hard limits for DDoS mitigation
+const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
+const REQUEST_TIMEOUT = 30000; // 30 seconds (Slowloris protection)
+
 const server = http.createServer(async (req, res) => {
+    // 1. Slowloris Mitigation (Drop slow connections)
+    res.setTimeout(REQUEST_TIMEOUT, () => {
+        console.log(`[Timeout] Connection dropped against Slowloris attack: ${req.socket.remoteAddress}`);
+        res.writeHead(408);
+        res.end('ShieldDOS: Request Timeout');
+    });
+
+    // 2. HTTP Payload Limiter (Prevent memory exhaustion)
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+    if (contentLength > MAX_PAYLOAD_SIZE) {
+        console.log(`[Payload Limit] Dropped oversized request (${contentLength} bytes) from ${req.socket.remoteAddress}`);
+        res.writeHead(413);
+        res.end('ShieldDOS: Payload Too Large');
+        req.socket.destroy();
+        return;
+    }
+
     const host = req.headers.host;
-    const ip = req.socket.remoteAddress || 'unknown';
+
+    // 3. Real-IP extraction (Honor X-Forwarded-For if behind a Load Balancer, else socket IP)
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
+    const ip = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : rawIp[0];
 
     // GeoIP Lookup
     const geo = geoip.lookup(ip);
@@ -35,26 +64,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
-        // 0. Global Rate Limiting using Redis (Infrastructure Protection)
-        const limit = 200; // requests per minute
-        const window = 60;
-        const key = `ratelimit:${ip}`;
-
-        try {
-            const current = await redis.incr(key);
-            if (current === 1) {
-                await redis.expire(key, window);
-            }
-            if (current > limit) {
-                res.writeHead(429);
-                res.end('ShieldDOS: Too Many Requests');
-                // We return immediately to save resources
-                return;
-            }
-        } catch (redisError) {
-            console.error('Redis Error:', redisError);
-            // Continue if Redis fails (fail-open)
-        }
+        // Global rate limiting logic moved below site loading to allow per-site config
 
         // 1. Check if site exists in DB
         const result = await client.query('SELECT * FROM site WHERE domain = $1', [host.split(':')[0]]);
@@ -65,6 +75,107 @@ const server = http.createServer(async (req, res) => {
             res.end('ShieldDOS: Site not configured');
             return;
         }
+
+        // 0. Rate Limiting using Redis
+        // We check if there's a specific rate limit or use a global one
+        const limit = site.rateLimit || 200; // default 200 per minute
+        const window = 60; // 1 minute window
+        const key = `ratelimit:${site.id}:${ip}`;
+
+        try {
+            const current = await redis.incr(key);
+            if (current === 1) {
+                await redis.expire(key, window);
+            }
+            if (current > limit) {
+                console.log(`[RateLimit] Blocked ${ip} targeted at ${host} (${current}/${limit})`);
+
+                // Async log rate limit block
+                axios.post(`${API_URL}/analytics`, {
+                    siteId: site.id,
+                    path: req.url,
+                    method: req.method,
+                    ipAddress: ip,
+                    statusCode: 429,
+                    userAgent: req.headers['user-agent'] || 'unknown',
+                    blocked: true,
+                    country
+                }).catch(err => console.error('API Log Error:', err.message));
+
+                res.writeHead(429);
+                res.end('ShieldDOS: Too Many Requests (Rate Limited)');
+                return;
+            }
+        } catch (redisError) {
+            console.error('Redis Error:', redisError);
+            // Continue if Redis fails (fail-open)
+        }
+
+        // --- SECURITY MIDDLEWARE LAYERS ---
+
+        // Layer 1: Bot Filter
+        if (site.botProtection) {
+            if (isBot(req)) {
+                console.log(`[BotFilter] Blocked ${ip} targetting ${host}`);
+                res.writeHead(403);
+                res.end('ShieldDOS: Bot Detected');
+
+                // Log exclusion
+                axios.post(`${API_URL}/analytics`, {
+                    siteId: site.id,
+                    path: req.url,
+                    method: req.method,
+                    ipAddress: ip,
+                    statusCode: 403,
+                    userAgent: req.headers['user-agent'] || 'unknown',
+                    blocked: true,
+                    country
+                }).catch(err => console.error('API Log Error:', err.message));
+
+                return;
+            }
+        }
+
+        // Layer 1.5: WAF
+        if (site.wafEnabled) {
+            if (isWafAttack(req)) {
+                console.log(`[WAF] Blocked attack from ${ip} targeting ${host}${req.url}`);
+                res.writeHead(403);
+                res.end('ShieldDOS: WAF Blocked Request (Malicious Pattern Detected)');
+
+                axios.post(`${API_URL}/analytics`, {
+                    siteId: site.id,
+                    path: req.url,
+                    method: req.method,
+                    ipAddress: ip,
+                    statusCode: 403,
+                    userAgent: req.headers['user-agent'] || 'unknown',
+                    blocked: true,
+                    country
+                }).catch(err => console.error('API Log Error:', err.message));
+
+                return;
+            }
+        }
+
+        // Layer 2: Challenge / Under Attack Mode
+        if (site.securityLevel === 'under_attack') {
+            const handled = handleChallenge(req, res);
+            if (handled) {
+                // Request was intercepted by challenge (served HTML or verified)
+                return;
+            }
+            // If handleChallenge returns false, it means user is verified, continue to proxy
+        }
+
+        // Layer 3: Edge Static Caching (Redis)
+        const cacheHit = await serveCachedResponse(req, res, redis, host);
+        if (cacheHit) {
+            // Served directly from Redis!
+            return;
+        }
+
+        // ----------------------------------
 
         // 2. Load Firewall Rules
         const rulesRes = await client.query('SELECT * FROM firewall_rule WHERE "siteId" = $1 AND "isActive" = true', [site.id]);
@@ -94,12 +205,13 @@ const server = http.createServer(async (req, res) => {
         }
 
         // 4. Log Request (Async via API)
+        // Only log if not already logged by middleware (e.g. bot block)
         axios.post(`${API_URL}/analytics`, {
             siteId: site.id,
             path: req.url,
             method: req.method,
             ipAddress: ip,
-            statusCode: blocked ? 403 : 200,
+            statusCode: blocked ? 403 : 200, // This might be inaccurate if upstream returns 404/500, but good enough for Access Log
             userAgent: req.headers['user-agent'] || 'unknown',
             blocked,
             country
@@ -114,6 +226,14 @@ const server = http.createServer(async (req, res) => {
         // 5. Proxy Request
         const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
         const changeOrigin = true;
+
+        // Inject Real-IP Headers for upstream origin Server
+        req.headers['x-forwarded-for'] = ip;
+        req.headers['x-shield-connecting-ip'] = ip;
+        req.headers['cf-connecting-ip'] = ip; // Compatibility with Cloudflare-expecting backends
+        req.headers['x-shield-country'] = country;
+
+        interceptAndCacheResponse(req, res, redis, host);
 
         // console.log(`[Proxy] Routing ${host}${req.url} -> ${target} (${ip} - ${country})`); 
 
