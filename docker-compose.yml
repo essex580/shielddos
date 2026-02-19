@@ -17,6 +17,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     container_name: shield_api
+    command: npm run start:dev
     restart: always
     environment:
       DATABASE_URL: postgres://shield_user:shield_password@postgres:5432/shield_db
@@ -33,6 +34,7 @@ services:
       context: .
       dockerfile: apps/proxy/Dockerfile
     container_name: shield_proxy
+    command: npm run dev
     restart: always
     environment:
       API_URL: http://api:3000

@@ -29,21 +29,27 @@
     </nav>
 
     <div class="p-4 border-t border-slate-800 bg-slate-900/50">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
-          <User class="w-4 h-4 text-slate-400" />
-        </div>
-        <div class="flex flex-col">
-          <span class="text-sm font-medium text-white">Administrator</span>
-          <span class="text-xs text-slate-500">Root Access</span>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
+            <User class="w-4 h-4 text-slate-400" />
+          </div>
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-white">Administrator</span>
+            <span class="text-xs text-slate-500">Root Access</span>
+          </div>
         </div>
       </div>
+      <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors text-xs font-medium border border-slate-700">
+        <LogOut class="w-3 h-3" />
+        <span>Sign Out</span>
+      </button>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { ShieldCheck, LayoutDashboard, Globe, Settings, User } from 'lucide-vue-next';
+import { ShieldCheck, LayoutDashboard, Globe, Settings, User, LogOut } from 'lucide-vue-next';
 
 defineProps<{
   currentPage: string

@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { Analytics } from './analytics.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('analytics')
 export class AnalyticsController {
@@ -12,11 +13,13 @@ export class AnalyticsController {
     }
 
     @Get(':siteId')
+    @UseGuards(AuthGuard('jwt'))
     getStats(@Param('siteId') siteId: string): Promise<Analytics[]> {
         return this.analyticsService.getStats(siteId);
     }
 
     @Get()
+    @UseGuards(AuthGuard('jwt'))
     getAllStats(): Promise<Analytics[]> {
         return this.analyticsService.getAllStats();
     }

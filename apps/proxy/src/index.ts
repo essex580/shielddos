@@ -40,21 +40,28 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        // 2. Log Request (Async - don't block)
+        // 2. Log Request (Async - don't block) - Log intent
         const logQuery = `
       INSERT INTO analytics ("siteId", path, method, "ipAddress", "statusCode", "userAgent", blocked)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
-        // We log '200' effectively for now, actual status might differ if upstream fails, but this is checking "intent"
-        // To be more accurate, we should log after proxy response, but for speed we log here.
         client.query(logQuery, [site.id, req.url, req.method, ip, 200, req.headers['user-agent'], false]).catch(console.error);
 
         // 3. Proxy Request
-        proxy.web(req, res, { target: `http://${site.targetIp}` }, (err) => {
-            console.error('Proxy Error:', err);
+        // Handle target protocol (http vs https)
+        const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+
+        console.log(`[Proxy] Routing ${host}${req.url} -> ${target}`);
+
+        proxy.web(req, res, {
+            target,
+            changeOrigin: true, // Needed for virtual hosted sites
+            secure: false       // Allow self-signed certs just in case
+        }, (err) => {
+            console.error('[Proxy Error] Upstream failed:', err);
             if (!res.headersSent) {
                 res.writeHead(502);
-                res.end('Bad Gateway');
+                res.end('Bad Gateway: Upstream Unreachable');
             }
         });
 
