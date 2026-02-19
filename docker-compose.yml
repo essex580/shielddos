@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: shield_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: shield_user
+      POSTGRES_PASSWORD: shield_password
+      POSTGRES_DB: shield_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: shield_api
+    restart: always
+    environment:
+      DATABASE_URL: postgres://shield_user:shield_password@postgres:5432/shield_db
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  proxy:
+    build:
+      context: .
+      dockerfile: apps/proxy/Dockerfile
+    container_name: shield_proxy
+    restart: always
+    environment:
+      API_URL: http://api:3000
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: shield_dashboard
+    restart: always
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+
+volumes:
+  postgres_data:
