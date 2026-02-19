@@ -1,5 +1,5 @@
 import * as http from 'http';
-import * as httpProxy from 'http-proxy';
+import httpProxy from 'http-proxy';
 
 const proxy = httpProxy.createProxyServer({});
 const PORT = process.env.PORT || 8080;

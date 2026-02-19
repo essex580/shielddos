@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+test
+apps/*/node_modules
+apps/*/dist
+apps/*/test
+.env
+.env.*
