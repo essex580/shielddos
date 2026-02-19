@@ -18,6 +18,12 @@ export class AnalyticsController {
         return result;
     }
 
+    @Get('chart')
+    @UseGuards(AuthGuard('jwt'))
+    getTrafficChart(): Promise<any[]> {
+        return this.analyticsService.getTrafficChartData();
+    }
+
     @Get(':siteId')
     @UseGuards(AuthGuard('jwt'))
     getStats(@Param('siteId') siteId: string): Promise<Analytics[]> {

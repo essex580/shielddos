@@ -4,6 +4,7 @@ import httpProxy from 'http-proxy';
 import { Client } from 'pg';
 import axios from 'axios';
 import Redis from 'ioredis';
+import geoip from 'geoip-lite';
 
 const proxy = httpProxy.createProxyServer({});
 const PORT = process.env.PORT || 8080;
@@ -22,6 +23,10 @@ client.connect().catch(err => console.error('DB Connection Error:', err));
 const server = http.createServer(async (req, res) => {
     const host = req.headers.host;
     const ip = req.socket.remoteAddress || 'unknown';
+
+    // GeoIP Lookup
+    const geo = geoip.lookup(ip);
+    const country = geo ? geo.country : 'XX'; // XX = Unknown or Local
 
     if (!host) {
         res.writeHead(400);
@@ -73,15 +78,19 @@ const server = http.createServer(async (req, res) => {
             if (rule.type === 'BLOCK_IP' && rule.value === ip) {
                 blocked = true;
                 blockReason = 'IP Blocked';
-                // Update hit count (async fire & forget)
+                client.query('UPDATE firewall_rule SET hits = hits + 1 WHERE id = $1', [rule.id]).catch(console.error);
+                break;
+            }
+            if (rule.type === 'BLOCK_COUNTRY' && rule.value === country) {
+                blocked = true;
+                blockReason = `Country Blocked (${country})`;
                 client.query('UPDATE firewall_rule SET hits = hits + 1 WHERE id = $1', [rule.id]).catch(console.error);
                 break;
             }
             if (rule.type === 'ALLOW_IP' && rule.value === ip) {
-                // Explicit allow overrides other potential blocks (if implemented)
+                // Explicit allow overrides other potential blocks
                 break;
             }
-            // Add other rule types here (Country, etc.)
         }
 
         // 4. Log Request (Async via API)
@@ -92,7 +101,8 @@ const server = http.createServer(async (req, res) => {
             ipAddress: ip,
             statusCode: blocked ? 403 : 200,
             userAgent: req.headers['user-agent'] || 'unknown',
-            blocked
+            blocked,
+            country
         }).catch(err => console.error('API Log Error:', err.message));
 
         if (blocked) {
@@ -102,11 +112,10 @@ const server = http.createServer(async (req, res) => {
         }
 
         // 5. Proxy Request
-        // Handle target protocol (http vs https)
         const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
-        const changeOrigin = true; // Always true for named hosts
+        const changeOrigin = true;
 
-        console.log(`[Proxy] Routing ${host}${req.url} -> ${target}`);
+        // console.log(`[Proxy] Routing ${host}${req.url} -> ${target} (${ip} - ${country})`); 
 
         proxy.web(req, res, {
             target,

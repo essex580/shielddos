@@ -8,7 +8,9 @@
         "dev": "ts-node-dev --respawn src/index.ts"
     },
     "dependencies": {
+        "@types/geoip-lite": "^1.4.4",
         "axios": "^1.13.5",
+        "geoip-lite": "^1.4.10",
         "http-proxy": "^1.18.1",
         "ioredis": "^5.9.3",
         "pg": "^8.11.0"

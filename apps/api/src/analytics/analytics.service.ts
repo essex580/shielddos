@@ -29,4 +29,19 @@ export class AnalyticsService {
             take: 100
         });
     }
+
+    async getTrafficChartData(): Promise<any[]> {
+        // Aggregate by minute for last hour
+        const result = await this.analyticsRepository.query(`
+            SELECT 
+                to_char(timestamp, 'HH24:MI') as time,
+                COUNT(*) as count,
+                SUM(CASE WHEN blocked = true THEN 1 ELSE 0 END) as blocked
+            FROM analytics
+            WHERE timestamp > NOW() - INTERVAL '1 hour'
+            GROUP BY to_char(timestamp, 'HH24:MI')
+            ORDER BY min(timestamp) ASC
+        `);
+        return result;
+    }
 }

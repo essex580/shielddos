@@ -23,6 +23,9 @@ export class Analytics {
     @Column({ nullable: true })
     userAgent: string;
 
+    @Column({ nullable: true })
+    country: string;
+
     @Column({ default: false })
     blocked: boolean;
 
