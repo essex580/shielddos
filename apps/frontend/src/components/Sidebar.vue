@@ -1,53 +1,56 @@
 <template>
-  <aside class="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col h-full font-sans">
-    <div class="p-6 flex items-center space-x-3 border-b border-slate-800">
-      <ShieldCheck class="w-8 h-8 text-blue-500" />
+  <aside class="w-64 bg-zinc-950 border-r border-zinc-800 text-zinc-400 flex flex-col h-full font-mono text-sm">
+    <div class="p-4 flex items-center space-x-3 border-b border-zinc-800">
+      <ShieldCheck class="w-6 h-6 text-white" />
       <div>
-        <h1 class="text-xl font-bold text-white tracking-tight">ShieldDOS</h1>
-        <p class="text-xs text-slate-500">Protection Panel</p>
+        <h1 class="text-sm font-bold text-white tracking-tight uppercase">SHIELD<span class="text-zinc-600">DOS</span></h1>
+        <p class="text-[10px] text-zinc-500">v2.0.0-terminal</p>
       </div>
     </div>
     
-    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 px-3">Menu</div>
+    <nav class="flex-1 p-0 space-y-px overflow-y-auto">
+      <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-6 mb-2 px-4">System</div>
       
       <a href="#" @click="$emit('page', 'dashboard')" 
-         :class="currentPage === 'dashboard' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 hover:text-white'"
-         class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors group">
-        <LayoutDashboard class="w-5 h-5" :class="currentPage === 'dashboard' ? 'text-blue-500' : 'text-slate-400'" />
-        <span class="text-sm font-medium">Dashboard</span>
+         :class="currentPage === 'dashboard' ? 'bg-white text-black' : 'hover:bg-zinc-900 hover:text-white'"
+         class="flex items-center space-x-3 px-4 py-3 transition-none border-l-2"
+         :style="currentPage === 'dashboard' ? 'border-color: #fff' : 'border-color: transparent'">
+        <LayoutDashboard class="w-4 h-4" />
+        <span class="font-medium">/dashboard</span>
       </a>
       
       <a href="#" @click="$emit('page', 'sites')" 
-         :class="currentPage === 'sites' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 hover:text-white'"
-         class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors group">
-        <Globe class="w-5 h-5" :class="currentPage === 'sites' ? 'text-blue-500' : 'text-slate-400'" />
-        <span class="text-sm font-medium">Sites</span>
+         :class="currentPage === 'sites' ? 'bg-white text-black' : 'hover:bg-zinc-900 hover:text-white'"
+         class="flex items-center space-x-3 px-4 py-3 transition-none border-l-2"
+         :style="currentPage === 'sites' ? 'border-color: #fff' : 'border-color: transparent'">
+        <Globe class="w-4 h-4" />
+        <span class="font-medium">/sites</span>
       </a>
       
-      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-8 mb-4 px-3">System</div>
+      <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-6 mb-2 px-4">Config</div>
 
       <a href="#" @click="$emit('page', 'settings')" 
-         :class="currentPage === 'settings' ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50 hover:text-white'"
-         class="flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors group">
-        <Settings class="w-5 h-5" :class="currentPage === 'settings' ? 'text-blue-500' : 'text-slate-400'" />
-        <span class="text-sm font-medium">Settings</span>
+         :class="currentPage === 'settings' ? 'bg-white text-black' : 'hover:bg-zinc-900 hover:text-white'"
+         class="flex items-center space-x-3 px-4 py-3 transition-none border-l-2"
+         :style="currentPage === 'settings' ? 'border-color: #fff' : 'border-color: transparent'">
+        <Settings class="w-4 h-4" />
+        <span class="font-medium">/settings</span>
       </a>
     </nav>
 
-    <div class="p-4 border-t border-slate-800 bg-slate-900">
-      <div class="flex items-center space-x-3 mb-4 p-2">
-        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-            <User class="w-4 h-4 text-slate-400" />
+    <div class="p-4 border-t border-zinc-800 bg-zinc-950">
+      <div class="flex items-center space-x-3 mb-4 p-2 border border-zinc-800">
+        <div class="w-8 h-8 bg-zinc-900 flex items-center justify-center border border-zinc-800">
+            <User class="w-4 h-4 text-zinc-500" />
         </div>
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-white">Administrator</span>
-          <span class="text-xs text-slate-500">Logged in</span>
+          <span class="text-xs font-bold text-white uppercase">root_user</span>
+          <span class="text-[10px] text-zinc-600">SSH-256</span>
         </div>
       </div>
-      <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition-colors text-xs font-medium border border-slate-700">
+      <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-zinc-900 hover:bg-white hover:text-black text-zinc-400 border border-zinc-800 transition-colors text-xs font-bold uppercase tracking-wider">
         <LogOut class="w-3 h-3" />
-        <span>Sign Out</span>
+        <span>Logout</span>
       </button>
     </div>
   </aside>

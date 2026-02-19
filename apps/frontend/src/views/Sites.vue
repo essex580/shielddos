@@ -1,64 +1,64 @@
 <template>
-  <div class="p-8 space-y-6 max-w-7xl mx-auto">
-    <header class="flex justify-between items-end pb-6 border-b border-slate-800">
+  <div class="p-6 space-y-6 max-w-full font-mono text-sm">
+    <header class="flex justify-between items-end pb-4 border-b border-zinc-800">
       <div>
-        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-          <Globe class="w-6 h-6 text-blue-500" /> Sites
+        <h2 class="text-xl font-bold text-white flex items-center gap-3 uppercase tracking-widest">
+          <Globe class="w-5 h-5 text-zinc-500" /> NETWORK_NODES
         </h2>
-        <p class="text-slate-400 mt-1 text-sm">Target domains configuration.</p>
+        <p class="text-zinc-500 mt-1 text-xs">Target domain configuration and firewall rules.</p>
       </div>
-      <button @click="showAddModal = true" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors shadow-sm flex items-center gap-2 font-medium text-sm">
-        <Plus class="w-4 h-4" /> Add Site
+      <button @click="showAddModal = true" class="terminal-button flex items-center gap-2 text-xs uppercase tracking-wider">
+        <Plus class="w-3 h-3" /> ADD_NODE
       </button>
     </header>
 
     <!-- Project List -->
-    <div class="bg-[#1e293b] rounded border border-slate-700 overflow-hidden shadow-sm">
-      <div v-if="loading" class="p-8 text-center text-slate-500 flex flex-col items-center gap-2">
-        <Loader2 class="w-6 h-6 animate-spin text-blue-500" />
-        <span class="text-sm">Loading...</span>
+    <div class="terminal-card p-0 overflow-hidden">
+      <div v-if="loading" class="p-8 text-center text-zinc-500 flex flex-col items-center gap-2 uppercase tracking-wide">
+        <Loader2 class="w-6 h-6 animate-spin text-zinc-400" />
+        <span class="text-xs">ESTABLISHING_CONNECTION...</span>
       </div>
       
-      <table v-else class="w-full text-left text-sm">
-        <thead class="bg-slate-800 text-slate-400 font-medium uppercase tracking-wider text-xs border-b border-slate-700">
+      <table v-else class="w-full text-left text-xs font-mono">
+        <thead class="bg-zinc-900/50 text-zinc-500 font-bold border-b border-zinc-800 uppercase tracking-wider">
           <tr>
-            <th class="p-4 pl-6">Domain</th>
-            <th class="p-4">Origin IP</th>
-            <th class="p-4">Status</th>
-            <th class="p-4">Security</th>
-            <th class="p-4 text-right pr-6">Actions</th>
+            <th class="p-3 pl-4">DOMAIN_NAME</th>
+            <th class="p-3">ORIGIN_IP</th>
+            <th class="p-3">STATUS</th>
+            <th class="p-3">SECURITY_LEVEL</th>
+            <th class="p-3 text-right pr-6">CONTROLS</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-700 text-slate-300">
-          <tr v-for="site in sites" :key="site.id" class="hover:bg-slate-700/50 transition-colors">
-            <td class="p-4 pl-6 font-medium text-white">{{ site.domain }}</td>
-            <td class="p-4 font-mono text-xs text-slate-400">{{ site.targetIp }}</td>
-            <td class="p-4">
-              <span :class="site.isActive ? 'text-emerald-400' : 'text-slate-500'" class="flex items-center gap-2 text-xs font-medium">
-                <span class="w-2 h-2 rounded-full" :class="site.isActive ? 'bg-emerald-500' : 'bg-slate-600'"></span>
-                {{ site.isActive ? 'Active' : 'Inactive' }}
+        <tbody class="divide-y divide-zinc-800 text-zinc-400">
+          <tr v-for="site in sites" :key="site.id" class="hover:bg-zinc-900 transition-colors group">
+            <td class="p-3 pl-4 font-bold text-white group-hover:text-zinc-200">{{ site.domain }}</td>
+            <td class="p-3 text-zinc-500">{{ site.targetIp }}</td>
+            <td class="p-3">
+              <span class="flex items-center gap-2 text-[10px] font-bold uppercase">
+                <span class="w-2 h-2" :class="site.isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'"></span>
+                {{ site.isActive ? 'ONLINE' : 'OFFLINE' }}
               </span>
             </td>
-            <td class="p-4">
-              <div class="flex items-center gap-2 text-slate-400 text-xs">
-                <Shield class="w-4 h-4" />
-                <span class="capitalize">{{ site.securityLevel }}</span>
+            <td class="p-3">
+              <div class="flex items-center gap-2 text-zinc-500 text-[10px] uppercase font-bold">
+                <Shield class="w-3 h-3" />
+                <span>{{ site.securityLevel }}</span>
               </div>
             </td>
-            <td class="p-4 text-right pr-6">
+            <td class="p-3 text-right pr-6">
               <div class="flex justify-end gap-2">
-                <button @click="openRules(site)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded text-xs border border-slate-600 transition-colors">
-                  Rules
+                <button @click="openRules(site)" class="border border-zinc-700 hover:bg-zinc-800 text-zinc-300 px-2 py-1 text-[10px] uppercase font-bold transition-colors">
+                  RULES
                 </button>
-                <button @click="deleteSite(site.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1" title="Delete">
-                  <Trash2 class="w-4 h-4" />
+                <button @click="deleteSite(site.id)" class="text-zinc-600 hover:text-red-500 transition-colors p-1" title="Delete">
+                  <Trash2 class="w-3 h-3" />
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="sites.length === 0">
-            <td colspan="5" class="p-12 text-center text-slate-500">
-                No sites configured yet.
+            <td colspan="5" class="p-12 text-center text-zinc-600 uppercase tracking-widest text-xs border-dashed border-zinc-800">
+                // NO_NODES_CONFIGURED
             </td>
           </tr>
         </tbody>
@@ -73,21 +73,21 @@
     />
 
     <!-- Add Modal -->
-    <div v-if="showAddModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div class="bg-[#1e293b] p-6 rounded border border-slate-700 w-full max-w-md shadow-xl">
-        <h3 class="text-lg font-bold text-white mb-4">Add New Domain</h3>
+    <div v-if="showAddModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div class="bg-zinc-950 p-6 border border-zinc-700 w-full max-w-md shadow-2xl">
+        <h3 class="text-sm font-bold text-white mb-6 uppercase tracking-widest border-b border-zinc-800 pb-2">Initialize New Node</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Domain Name</label>
-            <input v-model="newSite.domain" type="text" placeholder="example.com" class="w-full bg-[#0f172a] border border-slate-600 rounded p-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-1 uppercase">Target Domain</label>
+            <input v-model="newSite.domain" type="text" placeholder="example.com" class="terminal-input w-full p-2 text-sm">
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Target Origin IP</label>
-            <input v-model="newSite.targetIp" type="text" placeholder="123.45.67.89" class="w-full bg-[#0f172a] border border-slate-600 rounded p-2.5 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-1 uppercase">Origin Server IP</label>
+            <input v-model="newSite.targetIp" type="text" placeholder="192.168.1.1" class="terminal-input w-full p-2 text-sm">
           </div>
-          <div class="flex justify-end space-x-3 mt-6">
-            <button @click="showAddModal = false" class="px-4 py-2 text-sm text-slate-400 hover:text-white">Cancel</button>
-            <button @click="addSite" :disabled="!newSite.domain || !newSite.targetIp" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors disabled:opacity-50 text-sm font-medium">Save</button>
+          <div class="flex justify-end space-x-3 mt-8">
+            <button @click="showAddModal = false" class="terminal-button-outline text-xs">CANCEL</button>
+            <button @click="addSite" :disabled="!newSite.domain || !newSite.targetIp" class="terminal-button text-xs disabled:opacity-50">INITIALIZE</button>
           </div>
         </div>
       </div>

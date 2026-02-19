@@ -1,45 +1,51 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-[#0f172a]">
-    <div class="bg-[#1e293b] p-8 rounded-lg shadow-lg border border-slate-700 w-full max-w-md">
-      <div class="flex justify-center mb-6">
-        <ShieldCheck class="w-12 h-12 text-blue-500" />
+  <div class="flex items-center justify-center min-h-screen bg-zinc-950 font-mono text-sm">
+    <div class="w-full max-w-md p-8 border border-zinc-800 bg-zinc-950 relative">
+      <!-- Decorative corners -->
+      <div class="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-white"></div>
+      <div class="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-white"></div>
+      <div class="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-white"></div>
+      <div class="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-white"></div>
+
+      <div class="flex justify-center mb-8">
+        <ShieldCheck class="w-16 h-16 text-white stroke-1" />
       </div>
       
-      <div class="text-center mb-8">
-        <h2 class="text-2xl font-bold text-white mb-2">Login</h2>
-        <p class="text-slate-400 text-sm">Enter your credentials to access the panel.</p>
+      <div class="text-center mb-10">
+        <h2 class="text-2xl font-bold text-white mb-2 uppercase tracking-widest">SHIELD<span class="text-zinc-600">DOS</span></h2>
+        <p class="text-zinc-500 text-xs uppercase tracking-wider">Restricted Access // Auth Required</p>
       </div>
       
-      <form @submit.prevent="login" class="space-y-4">
+      <form @submit.prevent="login" class="space-y-6">
         <div>
-          <label class="block text-slate-400 text-sm font-medium mb-1">Username</label>
+          <label class="block text-zinc-500 text-[10px] font-bold uppercase mb-2 tracking-widest">Identify User</label>
           <input v-model="username" type="text" 
-                 class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors" 
-                 placeholder="Username" required>
+                 class="terminal-input w-full p-3 border-2 focus:border-white" 
+                 placeholder="USERNAME" required>
         </div>
         
         <div>
-          <label class="block text-slate-400 text-sm font-medium mb-1">Password</label>
+          <label class="block text-zinc-500 text-[10px] font-bold uppercase mb-2 tracking-widest">Access Key</label>
           <input v-model="password" type="password" 
-                 class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors" 
-                 placeholder="Password" required>
+                 class="terminal-input w-full p-3 border-2 focus:border-white" 
+                 placeholder="PASSWORD" required>
         </div>
 
-        <div v-if="error" class="flex items-center gap-2 text-red-400 text-sm p-3 rounded bg-red-500/10 border border-red-500/20">
+        <div v-if="error" class="flex items-center gap-2 text-red-500 text-xs font-bold p-3 border border-red-900 bg-red-900/10 uppercase">
           <ShieldAlert class="w-4 h-4 shrink-0" />
           {{ error }}
         </div>
 
         <button type="submit" :disabled="loading" 
-                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded transition-colors flex justify-center items-center gap-2 disabled:opacity-50 mt-2">
+                class="w-full bg-white hover:bg-zinc-200 text-black font-bold py-4 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 mt-4 uppercase tracking-widest text-xs">
           <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
-          {{ loading ? 'Signing in...' : 'Sign In' }}
+          {{ loading ? 'AUTHENTICATING...' : 'ESTABLISH SESSION' }}
         </button>
       </form>
       
-      <div class="mt-8 pt-6 border-t border-slate-700 text-center">
-        <p class="text-slate-500 text-xs flex items-center justify-center gap-1">
-          <Lock class="w-3 h-3" /> Secure Access
+      <div class="mt-10 pt-6 border-t border-zinc-900 text-center">
+        <p class="text-zinc-600 text-[10px] flex items-center justify-center gap-1 uppercase tracking-wider">
+          <Lock class="w-3 h-3" /> System Secured via 256-bit Encryption
         </p>
       </div>
     </div>

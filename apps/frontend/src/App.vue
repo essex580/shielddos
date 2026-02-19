@@ -32,10 +32,10 @@ const currentView = computed(() => {
       <Login @login-success="onLoginSuccess" />
   </div>
 
-  <div v-else class="flex h-screen bg-[#0f172a] text-slate-200 font-sans">
+  <div v-else class="flex h-screen bg-zinc-950 text-zinc-300 font-mono text-sm selection:bg-white selection:text-black">
     <Sidebar :current-page="currentPage" @page="(p: string) => p === 'logout' ? logout() : currentPage = p" />
     
-    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#0f172a]">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-zinc-950">
       <component :is="currentView" />
     </main>
   </div>
