@@ -8,6 +8,7 @@
         "dev": "ts-node-dev --respawn src/index.ts"
     },
     "dependencies": {
+        "axios": "^1.13.5",
         "http-proxy": "^1.18.1",
         "pg": "^8.11.0"
     },

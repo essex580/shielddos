@@ -7,6 +7,7 @@ import { Analytics } from './analytics/analytics.entity';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/user.entity';
+import { EventsModule } from './events/events.module';
 
 @Module({
     imports: [
@@ -24,6 +25,7 @@ import { User } from './users/user.entity';
         AnalyticsModule,
         AuthModule,
         UsersModule,
+        EventsModule,
     ],
     controllers: [],
     providers: [],

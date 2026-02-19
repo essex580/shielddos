@@ -2,14 +2,20 @@ import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { Analytics } from './analytics.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { EventsGateway } from '../events/events.gateway';
 
 @Controller('analytics')
 export class AnalyticsController {
-    constructor(private readonly analyticsService: AnalyticsService) { }
+    constructor(
+        private readonly analyticsService: AnalyticsService,
+        private readonly eventsGateway: EventsGateway,
+    ) { }
 
     @Post()
-    logRequest(@Body() data: Partial<Analytics>): Promise<Analytics> {
-        return this.analyticsService.logRequest(data);
+    async logRequest(@Body() data: Partial<Analytics>): Promise<Analytics> {
+        const result = await this.analyticsService.logRequest(data);
+        this.eventsGateway.emitNewTraffic(result);
+        return result;
     }
 
     @Get(':siteId')

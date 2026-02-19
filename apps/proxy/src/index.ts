@@ -1,12 +1,14 @@
+
 import * as http from 'http';
 import httpProxy from 'http-proxy';
 import { Client } from 'pg';
+import axios from 'axios';
 
 const proxy = httpProxy.createProxyServer({});
 const PORT = process.env.PORT || 8080;
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 
-// DB Configuration
+// DB Configuration (Keep for fast site lookup)
 const client = new Client({
     connectionString: process.env.DATABASE_URL || 'postgres://shield_user:shield_password@localhost:5432/shield_db',
 });
@@ -40,12 +42,17 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        // 2. Log Request (Async - don't block) - Log intent
-        const logQuery = `
-      INSERT INTO analytics ("siteId", path, method, "ipAddress", "statusCode", "userAgent", blocked)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `;
-        client.query(logQuery, [site.id, req.url, req.method, ip, 200, req.headers['user-agent'], false]).catch(console.error);
+        // 2. Log Request (Async via API - Fire and Forget for WebSocket update)
+        // We log '200' effectively for now.
+        axios.post(`${API_URL}/analytics`, {
+            siteId: site.id,
+            path: req.url,
+            method: req.method,
+            ipAddress: ip,
+            statusCode: 200,
+            userAgent: req.headers['user-agent'] || 'unknown',
+            blocked: false
+        }).catch(err => console.error('API Log Error:', err.message));
 
         // 3. Proxy Request
         // Handle target protocol (http vs https)

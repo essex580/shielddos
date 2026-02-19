@@ -17,13 +17,16 @@
         "@nestjs/jwt": "^11.0.2",
         "@nestjs/passport": "^11.0.5",
         "@nestjs/platform-express": "^10.0.0",
+        "@nestjs/platform-socket.io": "^10.0.0",
         "@nestjs/typeorm": "^10.0.2",
+        "@nestjs/websockets": "^10.0.0",
         "bcrypt": "^6.0.0",
         "passport": "^0.7.0",
         "passport-jwt": "^4.0.1",
         "pg": "^8.18.0",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
+        "socket.io": "^4.8.3",
         "typeorm": "^0.3.28"
     },
     "devDependencies": {
