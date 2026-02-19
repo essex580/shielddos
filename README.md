@@ -1,35 +1,71 @@
-# ShieldDOS
+# 🛡️ ShieldDOS
 
-A self-hosted, simplified "Cloudflare-like" DDoS protection and monitoring dashboard.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC.svg?style=flat&logo=typescript&logoColor=white)
+![Vue.js](https://img.shields.io/badge/Vue.js-35495E.svg?style=flat&logo=vuedotjs&logoColor=4FC08D)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E.svg?style=flat&logo=nestjs&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=docker&logoColor=white)
 
-## Structure
+> **A self-hosted, high-performance DDoS protection & monitoring dashboard.**
 
-- **apps/api**: NestJS Backend (Manage sites, users, analytics).
-- **apps/proxy**: TypeScript Reverse Proxy (Intercepts and filters traffic).
-- **apps/frontend**: Vue 3 Dashboard (Real-time monitoring).
+```
+      .
+     / \
+    /   \
+   /  |  \
+  /   |   \
+ /    |    \    ShieldDOS
+ \    |    /    Protection Active
+  \   |   /
+   \  |  /
+    \ | /
+     \|/
+      '
+```
 
-## Getting Started
+## 🚀 Features
+
+- **Real-time Attack Monitoring**: visualizing traffic spikes instantly.
+- **Smart Reverse Proxy**: Intercepts and filters traffic before it hits your server.
+- **Dynamic Rule Engine**: Block IPs, User-Agents, or specific patterns.
+- **Modern Dashboard**: Built with Vue 3 and TailwindCSS for a premium experience.
+
+## 🛠️ Tech Stack
+
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| **Backend** | NestJS | Robust API & WebSocket server |
+| **Frontend** | Vue 3 + Vite | Blazing fast dashboard |
+| **Proxy** | Node.js + TS | High-concurrency request handling |
+| **Database** | PostgreSQL | Analytics & Configuration storage |
+| **Infra** | Docker Compose | One-command deployment |
+
+## 🏁 Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Docker Desktop installed & running.
 
-### Running Locally
+### ⚡ Quick Start
 
-1. Build and start the services:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/essex580/shielddos.git
+   cd shielddos
+   ```
+
+2. **Start the engines**
    ```bash
    docker-compose up --build
    ```
 
-2. Access the Dashboard:
-   - URL: `http://localhost:5173`
+3. **Access the Dashboard**
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-3. API is available at `http://localhost:3000`.
-4. Proxy is listening on `http://localhost:8080`.
+## 📸 Screenshots
 
-## Development
+*(Screenshots coming soon...)*
 
-This project uses Turborepo.
+---
 
-- Install dependencies: `npm install`
-- Run dev mode: `npm run dev` (requires Node.js locally if not using Docker)
+Made with ❤️ by Essex.
