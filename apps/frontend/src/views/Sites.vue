@@ -43,9 +43,14 @@
               </div>
             </td>
             <td class="p-4 text-right pr-6">
-              <button @click="deleteSite(site.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1.5 hover:bg-rose-500/10 rounded">
-                <Trash2 class="w-4 h-4" />
-              </button>
+              <div class="flex justify-end gap-2">
+                <button @click="openRules(site)" class="bg-slate-800 text-slate-300 hover:text-white px-2 py-1 rounded text-xs font-medium border border-slate-700 flex items-center gap-1">
+                  <Shield class="w-3 h-3" /> Rules
+                </button>
+                <button @click="deleteSite(site.id)" class="text-slate-500 hover:text-rose-400 transition-colors p-1.5 hover:bg-rose-500/10 rounded">
+                  <Trash2 class="w-4 h-4" />
+                </button>
+              </div>
             </td>
           </tr>
           <tr v-if="sites.length === 0">
@@ -59,6 +64,13 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Firewall Rules Modal -->
+    <FirewallRules v-if="showRulesModal && selectedSite" 
+        :siteId="selectedSite.id" 
+        :siteDomain="selectedSite.domain" 
+        @close="showRulesModal = false" 
+    />
 
     <!-- Add Modal -->
     <div v-if="showAddModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
@@ -90,6 +102,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { Globe, Plus, Trash2, Shield } from 'lucide-vue-next';
+import FirewallRules from '../components/FirewallRules.vue';
 
 interface Site {
   id: string;
@@ -102,6 +115,8 @@ interface Site {
 const sites = ref<Site[]>([])
 const loading = ref(true)
 const showAddModal = ref(false)
+const showRulesModal = ref(false)
+const selectedSite = ref<any>(null)
 const newSite = ref({ domain: '', targetIp: '' })
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -138,6 +153,11 @@ const deleteSite = async (id: string) => {
     } catch (e) {
         console.error("Failed to delete site", e);
     }
+}
+
+const openRules = (site: Site) => {
+    selectedSite.value = site;
+    showRulesModal.value = true;
 }
 
 onMounted(() => {

@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { FirewallRule } from './firewall-rule.entity';
 
 @Entity()
 export class Site {
@@ -16,6 +17,9 @@ export class Site {
 
     @Column({ default: 'lenient' }) // 'lenient', 'normal', 'strict', 'under_attack'
     securityLevel: string;
+
+    @OneToMany(() => FirewallRule, (rule) => rule.site)
+    firewallRules: FirewallRule[];
 
     @CreateDateColumn()
     createdAt: Date;

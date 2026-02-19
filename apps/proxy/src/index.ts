@@ -36,25 +36,47 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
-        if (!site.isActive) {
-            res.writeHead(503);
-            res.end('ShieldDOS: Site maintenance');
-            return;
+        // 2. Load Firewall Rules
+        const rulesRes = await client.query('SELECT * FROM firewall_rule WHERE "siteId" = $1 AND "isActive" = true', [site.id]);
+        const rules = rulesRes.rows;
+
+        // 3. Enforce Rules
+        let blocked = false;
+        let blockReason = '';
+
+        for (const rule of rules) {
+            if (rule.type === 'BLOCK_IP' && rule.value === ip) {
+                blocked = true;
+                blockReason = 'IP Blocked';
+                // Update hit count (async fire & forget)
+                client.query('UPDATE firewall_rule SET hits = hits + 1 WHERE id = $1', [rule.id]).catch(console.error);
+                break;
+            }
+            if (rule.type === 'ALLOW_IP' && rule.value === ip) {
+                // Explicit allow overrides other potential blocks (if implemented)
+                break;
+            }
+            // Add other rule types here (Country, etc.)
         }
 
-        // 2. Log Request (Async via API - Fire and Forget for WebSocket update)
-        // We log '200' effectively for now.
+        // 4. Log Request (Async via API)
         axios.post(`${API_URL}/analytics`, {
             siteId: site.id,
             path: req.url,
             method: req.method,
             ipAddress: ip,
-            statusCode: 200,
+            statusCode: blocked ? 403 : 200,
             userAgent: req.headers['user-agent'] || 'unknown',
-            blocked: false
+            blocked
         }).catch(err => console.error('API Log Error:', err.message));
 
-        // 3. Proxy Request
+        if (blocked) {
+            res.writeHead(403);
+            res.end(`ShieldDOS: Access Denied (${blockReason})`);
+            return;
+        }
+
+        // 5. Proxy Request
         // Handle target protocol (http vs https)
         const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
 
