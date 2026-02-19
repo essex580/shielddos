@@ -32,16 +32,10 @@ const currentView = computed(() => {
       <Login @login-success="onLoginSuccess" />
   </div>
 
-  <div v-else class="flex h-screen bg-[#020617] text-slate-200 font-sans selection:bg-blue-500/30 selection:text-blue-200">
-    <!-- Main Background Gradients -->
-    <div class="fixed inset-0 z-0 pointer-events-none">
-        <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-900/20 rounded-full blur-[128px] opacity-50"></div>
-        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-900/20 rounded-full blur-[128px] opacity-50"></div>
-    </div>
-
+  <div v-else class="flex h-screen bg-[#0f172a] text-slate-200 font-sans">
     <Sidebar :current-page="currentPage" @page="(p: string) => p === 'logout' ? logout() : currentPage = p" />
     
-    <main class="flex-1 overflow-y-auto overflow-x-hidden relative z-10 scroll-smooth">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#0f172a]">
       <component :is="currentView" />
     </main>
   </div>

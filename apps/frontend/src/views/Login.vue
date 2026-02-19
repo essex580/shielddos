@@ -1,51 +1,45 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-[#020617] relative overflow-hidden">
-    <!-- Background Effects -->
-    <div class="absolute inset-0 z-0">
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[100px] opacity-30 animate-pulse"></div>
-    </div>
-
-    <div class="glass-card p-10 rounded-2xl w-full max-w-md relative z-10 border border-slate-700/50">
-      <div class="flex justify-center mb-8 relative">
-        <div class="absolute inset-0 bg-blue-500 blur-2xl opacity-20 rounded-full"></div>
-        <ShieldCheck class="w-16 h-16 text-blue-500 relative z-10" />
+  <div class="flex items-center justify-center min-h-screen bg-[#0f172a]">
+    <div class="bg-[#1e293b] p-8 rounded-lg shadow-lg border border-slate-700 w-full max-w-md">
+      <div class="flex justify-center mb-6">
+        <ShieldCheck class="w-12 h-12 text-blue-500" />
       </div>
       
       <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-white tracking-tight mb-2">Welcome Back</h2>
-        <p class="text-slate-400 text-sm">Sign in to access your protection dashboard</p>
+        <h2 class="text-2xl font-bold text-white mb-2">Login</h2>
+        <p class="text-slate-400 text-sm">Enter your credentials to access the panel.</p>
       </div>
       
-      <form @submit.prevent="login" class="space-y-5">
-        <div class="space-y-1.5">
-          <label class="block text-slate-300 text-xs font-semibold uppercase tracking-wider ml-1">Username</label>
+      <form @submit.prevent="login" class="space-y-4">
+        <div>
+          <label class="block text-slate-400 text-sm font-medium mb-1">Username</label>
           <input v-model="username" type="text" 
-                 class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition-all duration-200" 
-                 placeholder="Enter your username" required>
+                 class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors" 
+                 placeholder="Username" required>
         </div>
         
-        <div class="space-y-1.5">
-          <label class="block text-slate-300 text-xs font-semibold uppercase tracking-wider ml-1">Password</label>
+        <div>
+          <label class="block text-slate-400 text-sm font-medium mb-1">Password</label>
           <input v-model="password" type="password" 
-                 class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 focus:outline-none transition-all duration-200" 
-                 placeholder="••••••••" required>
+                 class="w-full bg-slate-800 border border-slate-700 rounded p-3 text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-colors" 
+                 placeholder="Password" required>
         </div>
 
-        <div v-if="error" class="flex items-center gap-2 text-red-400 text-sm p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+        <div v-if="error" class="flex items-center gap-2 text-red-400 text-sm p-3 rounded bg-red-500/10 border border-red-500/20">
           <ShieldAlert class="w-4 h-4 shrink-0" />
           {{ error }}
         </div>
 
         <button type="submit" :disabled="loading" 
-                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-lg transition-all duration-200 shadow-lg shadow-blue-900/20 hover:shadow-blue-600/30 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2">
+                class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded transition-colors flex justify-center items-center gap-2 disabled:opacity-50 mt-2">
           <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
-          {{ loading ? 'Authenticating...' : 'Sign In' }}
+          {{ loading ? 'Signing in...' : 'Sign In' }}
         </button>
       </form>
       
-      <div class="mt-8 pt-6 border-t border-slate-700/30 text-center">
+      <div class="mt-8 pt-6 border-t border-slate-700 text-center">
         <p class="text-slate-500 text-xs flex items-center justify-center gap-1">
-          <Lock class="w-3 h-3" /> Secure Enterprise Access
+          <Lock class="w-3 h-3" /> Secure Access
         </p>
       </div>
     </div>

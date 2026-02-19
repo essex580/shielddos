@@ -13,15 +13,6 @@
     animation: fadeInDown 0.3s ease-out;
   }
 
-  /* Glassmorphism Utilities */
-  .glass {
-    @apply bg-slate-900/70 backdrop-blur-md border border-slate-700/50;
-  }
-
-  .glass-card {
-    @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 shadow-xl;
-  }
-
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
