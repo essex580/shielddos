@@ -23,14 +23,19 @@ export const handleChallenge = async (req: IncomingMessage, res: ServerResponse,
 
     if (cookies[COOKIE_NAME]) {
         try {
-            const [hash, ipStr, timestamp] = cookies[COOKIE_NAME].split('.');
-            // Verify HMAC signature
-            const expectedHash = crypto.createHmac('sha256', SECRET).update(`${ipStr}.${timestamp}`).digest('hex');
+            // Using '|' delimiter to support IPv4 IPs which naturally contain dots.
+            const parts = cookies[COOKIE_NAME].split('|');
+            if (parts.length === 3) {
+                const [hash, ipStr, timestamp] = parts;
 
-            if (hash === expectedHash && ipStr === clientIp) {
-                // Verify expiration (30 minutes)
-                if (Date.now() - parseInt(timestamp) < 30 * 60 * 1000) {
-                    return false; // Valid clearance, pass through to proxy
+                // Verify HMAC signature
+                const expectedHash = crypto.createHmac('sha256', SECRET).update(`${ipStr}|${timestamp}`).digest('hex');
+
+                if (hash === expectedHash && ipStr === clientIp) {
+                    // Verify expiration (30 minutes)
+                    if (Date.now() - parseInt(timestamp) < 30 * 60 * 1000) {
+                        return false; // Valid clearance, pass through to proxy
+                    }
                 }
             }
         } catch (e) {
@@ -58,8 +63,8 @@ export const handleChallenge = async (req: IncomingMessage, res: ServerResponse,
                 // If they reached here via the 3-second HTML delay form, issue the clearance cookie natively.
                 if (!site.turnstileSecretKey || !site.turnstileSiteKey) {
                     const timestamp = Date.now();
-                    const hash = crypto.createHmac('sha256', SECRET).update(`${clientIp}.${timestamp}`).digest('hex');
-                    const clearanceCookie = `${hash}.${clientIp}.${timestamp}`;
+                    const hash = crypto.createHmac('sha256', SECRET).update(`${clientIp}|${timestamp}`).digest('hex');
+                    const clearanceCookie = `${hash}|${clientIp}|${timestamp}`;
 
                     res.writeHead(302, {
                         'Set-Cookie': `${COOKIE_NAME}=${clearanceCookie}; Path=/; HttpOnly; Max-Age=1800; SameSite=Lax`,
@@ -90,8 +95,8 @@ export const handleChallenge = async (req: IncomingMessage, res: ServerResponse,
                     if (cfRes.data.success) {
                         // Issue Clearance Cookie
                         const timestamp = Date.now();
-                        const hash = crypto.createHmac('sha256', SECRET).update(`${clientIp}.${timestamp}`).digest('hex');
-                        const clearanceCookie = `${hash}.${clientIp}.${timestamp}`;
+                        const hash = crypto.createHmac('sha256', SECRET).update(`${clientIp}|${timestamp}`).digest('hex');
+                        const clearanceCookie = `${hash}|${clientIp}|${timestamp}`;
 
                         res.writeHead(302, {
                             'Set-Cookie': `${COOKIE_NAME}=${clearanceCookie}; Path=/; HttpOnly; Max-Age=1800; SameSite=Lax`,
