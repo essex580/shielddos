@@ -13,16 +13,12 @@ axios.interceptors.request.use(config => {
 });
 
 // Navigate to login on 401, but prevent infinite refresh loops
-let isReloading = false;
 axios.interceptors.response.use(response => response, error => {
     const isAuthEndpoint = error.config && error.config.url && (error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register'));
 
     if (error.response && error.response.status === 401 && !isAuthEndpoint) {
         localStorage.removeItem('access_token');
-        if (!isReloading) {
-            isReloading = true;
-            window.location.reload();
-        }
+        window.dispatchEvent(new Event('auth-expired'));
     }
     return Promise.reject(error);
 });

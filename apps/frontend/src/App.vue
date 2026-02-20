@@ -10,13 +10,17 @@ const isAuthenticated = ref(!!localStorage.getItem('access_token'))
 
 const onLoginSuccess = () => {
     isAuthenticated.value = true
-    window.location.reload() // Reload to attach token to axios
+    // Axios interceptor gets the token dynamically, no need to reload
 }
 
 const logout = () => {
     localStorage.removeItem('access_token')
     isAuthenticated.value = false
 }
+
+onMounted(() => {
+    window.addEventListener('auth-expired', logout);
+})
 
 const currentView = computed(() => {
   switch (currentPage.value) {
