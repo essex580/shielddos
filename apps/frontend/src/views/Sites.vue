@@ -65,13 +65,13 @@
               </td>
               <td class="p-3 text-right pr-6">
                 <div class="flex justify-end gap-2">
-                  <button @click="toggleTab(site.id, 'settings')" :class="expandedSiteId === site.id && expandedTab === 'settings' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'" class="border border-zinc-700 rounded-md px-2 py-1 text-xs font-semibold transition-colors" title="Settings">
+                  <button @click="openDrawer(site, 'settings')" class="border border-zinc-700 bg-zinc-900 text-zinc-300 rounded-md hover:bg-zinc-800 hover:text-white px-2 py-1 text-xs font-semibold transition-colors" title="Settings">
                     <Settings class="w-3 h-3" />
                   </button>
                   <button @click="purgeCache(site)" class="border border-zinc-700 bg-blue-900/30 text-blue-400 rounded-md hover:bg-blue-900/50 px-2 py-1 text-xs font-semibold transition-colors" title="Purge Edge Cache">
                     Purge Cache
                   </button>
-                  <button @click="toggleTab(site.id, 'rules')" :class="expandedSiteId === site.id && expandedTab === 'rules' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'" class="border border-zinc-700 rounded-md px-2 py-1 text-xs font-semibold transition-colors">
+                  <button @click="openDrawer(site, 'rules')" class="border border-zinc-700 bg-zinc-900 text-zinc-300 rounded-md hover:bg-zinc-800 hover:text-white px-2 py-1 text-xs font-semibold transition-colors">
                     Rules
                   </button>
                   <button @click="deleteSite(site.id)" class="text-zinc-600 hover:text-red-500 transition-colors p-1" title="Delete">
@@ -81,92 +81,6 @@
               </td>
             </tr>
 
-            <!-- Expanded Dropdown Row -->
-            <tr v-if="expandedSiteId === site.id">
-              <td colspan="5" class="p-0 bg-zinc-950/80">
-                <div class="border-l-2" :class="expandedTab === 'settings' ? 'border-blue-500' : 'border-emerald-500'">
-                  <div class="p-6">
-                    
-                    <!-- SETTINGS TAB -->
-                    <div v-if="expandedTab === 'settings'" class="space-y-6 flex flex-col w-full min-w-full lg:min-w-[600px] max-w-2xl mx-auto">
-                      <div class="pb-4 border-b border-zinc-800">
-                          <UptimeChart :site-id="site.id" />
-                      </div>
-
-                      <div class="flex items-center justify-between mt-2">
-                          <div>
-                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Under Attack Mode</label>
-                            <p class="text-[10px] text-zinc-600">JS Challenge for all visitors</p>
-                          </div>
-                          <button @click="toggleSecurityLevel" 
-                            class="w-10 h-5 rounded-full relative transition-colors"
-                            :class="selectedSite.securityLevel === 'under_attack' ? 'bg-red-600' : 'bg-zinc-800'">
-                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                              :class="selectedSite.securityLevel === 'under_attack' ? 'left-6' : 'left-1'"></div>
-                          </button>
-                      </div>
-
-                      <div class="flex items-center justify-between">
-                          <div>
-                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Bot Protection</label>
-                            <p class="text-[10px] text-zinc-600">Block common automated scripts</p>
-                          </div>
-                          <button @click="toggleBotProtection" 
-                            class="w-10 h-5 rounded-full relative transition-colors"
-                            :class="selectedSite.botProtection ? 'bg-blue-600' : 'bg-zinc-800'">
-                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                              :class="selectedSite.botProtection ? 'left-6' : 'left-1'"></div>
-                          </button>
-                      </div>
-
-                      <div class="flex items-center justify-between">
-                          <div>
-                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">WAF Filter</label>
-                            <p class="text-[10px] text-zinc-600">Block SQLi, XSS and malicious payloads</p>
-                          </div>
-                          <button @click="toggleWaf" 
-                            class="w-10 h-5 rounded-full relative transition-colors"
-                            :class="selectedSite.wafEnabled ? 'bg-emerald-600' : 'bg-zinc-800'">
-                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                              :class="selectedSite.wafEnabled ? 'left-6' : 'left-1'"></div>
-                          </button>
-                      </div>
-
-                      <div class="flex items-center justify-between">
-                          <div>
-                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Rate Limiting</label>
-                            <p class="text-[10px] text-zinc-600">Max requests per minute per IP</p>
-                          </div>
-                          <input type="number" 
-                            v-model.number="selectedSite.rateLimit" 
-                            @change="updateRateLimit"
-                            class="w-20 bg-zinc-950 border border-zinc-700 p-1.5 text-white text-xs rounded-md focus:outline-none focus:border-zinc-500 text-center">
-                      </div>
-
-                      <div class="pt-4 border-t border-zinc-800 space-y-4">
-                          <h3 class="text-xs font-bold text-white uppercase tracking-widest">Custom error pages (HTML)</h3>
-                          
-                          <div>
-                              <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">403 Access Denied (WAF/Bots)</label>
-                              <textarea v-model="selectedSite.customErrorPage403" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Access Denied by WAF</h1></body></html>"></textarea>
-                          </div>
-                          
-                          <div>
-                              <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">502 Bad Gateway (Upstream Down)</label>
-                              <textarea v-model="selectedSite.customErrorPage502" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Origin Server Offline</h1></body></html>"></textarea>
-                          </div>
-                      </div>
-                    </div>
-
-                    <!-- RULES TAB -->
-                    <div v-if="expandedTab === 'rules'" class="w-full max-w-4xl mx-auto">
-                        <FirewallRules :siteId="site.id" :siteDomain="site.domain" />
-                    </div>
-
-                  </div>
-                </div>
-              </td>
-            </tr>
           </template>
           <tr v-if="sites.length === 0">
             <td colspan="5" class="p-12 text-center text-zinc-500 text-xs border border-zinc-800 rounded-md">
@@ -176,6 +90,19 @@
         </tbody>
       </table>
     </div>
+
+    <!-- New Offcanvas settings drawer -->
+    <SiteDrawer 
+      :is-open="isDrawerOpen" 
+      :site="selectedSite"
+      @close="closeDrawer"
+      @purge-cache="purgeCache"
+      @toggle-waf="toggleWaf"
+      @toggle-bot="toggleBotProtection"
+      @toggle-security="toggleSecurityLevel"
+      @update-rate="updateRateLimit"
+      @update-pages="updateCustomPages"
+    />
 
     <!-- Add Modal -->
     <TerminalModal v-if="showAddModal" @close="showAddModal = false">
@@ -202,9 +129,8 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { Globe, Plus, Trash2, Shield, ShieldCheck, Bot, Loader2, Settings } from 'lucide-vue-next';
-import FirewallRules from '../components/FirewallRules.vue';
 import TerminalModal from '../components/TerminalModal.vue';
-import UptimeChart from '../components/UptimeChart.vue';
+import SiteDrawer from '../components/SiteDrawer.vue';
 
 interface Site {
   id: string;
@@ -231,18 +157,21 @@ const showAddModal = ref(false)
 const selectedSite = ref<any>(null)
 const newSite = ref({ domain: '', targetIp: '' })
 
-const expandedSiteId = ref<string | null>(null)
-const expandedTab = ref<'settings' | 'rules' | null>(null)
+const isDrawerOpen = ref(false)
 
-const toggleTab = (siteId: string, tab: 'settings' | 'rules') => {
-    if (expandedSiteId.value === siteId && expandedTab.value === tab) {
-        expandedSiteId.value = null;
-        expandedTab.value = null;
-    } else {
-        expandedSiteId.value = siteId;
-        expandedTab.value = tab;
-        selectedSite.value = sites.value.find(s => s.id === siteId);
-    }
+const openDrawer = (site: Site, initialTab: 'settings' | 'rules') => {
+    selectedSite.value = site;
+    isDrawerOpen.value = true;
+    // We could pass initialTab to the drawer via a prop if we want it to open directly to rules or settings. 
+    // Currently SiteDrawer defaults to 'rules' subTab. We can add a prop to SiteDrawer if needed, 
+    // but for now just opening it is fine since it's an all-in-one Bento grid.
+}
+
+const closeDrawer = () => {
+    isDrawerOpen.value = false;
+    setTimeout(() => {
+        selectedSite.value = null; // Clear after animation
+    }, 300);
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -276,9 +205,8 @@ const deleteSite = async (id: string) => {
     try {
         await axios.delete(`${API_URL}/sites/${id}`);
         sites.value = sites.value.filter(s => s.id !== id);
-        if (expandedSiteId.value === id) {
-            expandedSiteId.value = null;
-            expandedTab.value = null;
+        if (selectedSite.value?.id === id) {
+            closeDrawer();
         }
     } catch (e) {
         console.error("Failed to delete site", e);
@@ -335,19 +263,23 @@ const toggleWaf = async () => {
     }
 }
 
-const updateRateLimit = async () => {
+const updateRateLimit = async (newLimit: number) => {
     if (!selectedSite.value) return;
     try {
-        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { rateLimit: selectedSite.value.rateLimit || 200 });
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { rateLimit: newLimit || 200 });
+        selectedSite.value.rateLimit = newLimit;
         const s = sites.value.find(s => s.id === selectedSite.value.id);
-        if (s) s.rateLimit = selectedSite.value.rateLimit;
+        if (s) s.rateLimit = newLimit;
     } catch (e) {
         console.error("Failed to update rate limit", e);
     }
 }
 
-const updateCustomPages = async () => {
+const updateCustomPages = async (payload: { type: '403' | '502', value: string }) => {
     if (!selectedSite.value) return;
+    
+    selectedSite.value[`customErrorPage${payload.type}`] = payload.value;
+    
     try {
         await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, {
             customErrorPage403: selectedSite.value.customErrorPage403,
