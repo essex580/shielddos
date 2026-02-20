@@ -14,6 +14,36 @@ const PORT = process.env.PORT || 8080;
 const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 
+// Autonomous Traffic Shaping (Auto-WAF) - Anomaly Detection Engine
+proxy.on('proxyRes', async (proxyRes, req: any, res) => {
+    const site = req.shieldSite;
+    if (site && site.autoWafEnabled && site.securityLevel !== 'under_attack') {
+        const status = proxyRes.statusCode || 200;
+        // Monitor for Layer 7 Anomaly Behaviors: 404 scanning, 5xx database drops, or 429 rate limits
+        if (status === 404 || status >= 500 || status === 429) {
+            const errorKey = `shield:autowaf:${site.id}`;
+            // Intentionally bypassing top-level await via raw Redis promise
+            redis.incr(errorKey).then(errors => {
+                if (errors === 1) redis.expire(errorKey, 60); // 60-second analysis window
+
+                // Threshold: 100 critical HTTP errors per minute triggers the WAF automatically
+                if (errors > 100) {
+                    console.log(`[Auto-WAF ML] Severe Layer 7 Anomaly Detected on ${site.domain}! Autonomously engaging Under Attack Mode.`);
+
+                    // Instantly alter the local V8 memory state for instantaneous interception
+                    site.securityLevel = 'under_attack';
+
+                    // Persist defensive posture seamlessly into PostgreSQL
+                    client.query('UPDATE site SET "securityLevel" = $1 WHERE id = $2', ['under_attack', site.id]).catch(console.error);
+
+                    // Reset counter to prevent execution spam
+                    redis.del(errorKey).catch(() => { });
+                }
+            }).catch(e => console.error('[Auto-WAF Error]', e));
+        }
+    }
+});
+
 function getRegionFromCountry(countryCode: string): string {
     const eu = ['AD', 'AL', 'AT', 'AX', 'BA', 'BE', 'BG', 'BY', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FO', 'FR', 'GB', 'GG', 'GI', 'GR', 'HR', 'HU', 'IE', 'IM', 'IS', 'IT', 'JE', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'RU', 'SE', 'SI', 'SJ', 'SM', 'UA', 'VA'];
     const us = ['US', 'CA', 'MX'];
@@ -32,6 +62,8 @@ function getRegionFromCountry(countryCode: string): string {
 }
 
 // SSL Configuration
+import * as tls from 'tls';
+
 let sslOptions: https.ServerOptions = {};
 try {
     const keyPath = path.join(__dirname, '../../../certs/server.key');
@@ -41,13 +73,51 @@ try {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath)
         };
-        console.log('[SSL] Loaded local certificates successfully.');
+        console.log('[SSL] Loaded local fallback certificates successfully.');
     } else {
         console.warn('[SSL] Certificates not found. HTTPS server will fail if started without them.');
     }
 } catch (e) {
     console.error('[SSL] Error loading certs:', e);
 }
+
+// 🌐 Zero-Touch Auto SSL (SNI Callback Interception)
+// Dynamically resolves Let's Encrypt certificates from Database without rebooting Proxy
+sslOptions.SNICallback = async (domain, cb) => {
+    try {
+        // Layer 0: High-speed TLS Memory Cache
+        const cacheKey = `shield:ssl:${domain}`;
+        const cachedStr = await redis.get(cacheKey);
+        let certObj = cachedStr ? JSON.parse(cachedStr) : null;
+
+        if (!certObj) {
+            // Layer 1: Postgres Source of Truth
+            const res = await client.query('SELECT "sslCert", "sslKey" FROM site WHERE domain = $1 AND "isActive" = true AND "autoSslEnabled" = true', [domain]);
+            if (res.rows.length > 0 && res.rows[0].sslCert && res.rows[0].sslKey) {
+                certObj = { cert: res.rows[0].sslCert, key: res.rows[0].sslKey };
+                await redis.set(cacheKey, JSON.stringify(certObj), 'EX', 3600); // 1 hr Cache
+            }
+        }
+
+        if (certObj) {
+            // Serve the Enterprise ACME Certificate!
+            const ctx = tls.createSecureContext({
+                key: certObj.key,
+                cert: certObj.cert
+            });
+            return cb(null, ctx);
+        }
+    } catch (e) {
+        console.error(`[SNI Error] Failed resolving TLS context for ${domain}:`, e);
+    }
+
+    // Safety Fallback: Serve the generic default certificate
+    if (sslOptions.cert) {
+        cb(null, tls.createSecureContext({ key: sslOptions.key as string, cert: sslOptions.cert as string }));
+    } else {
+        cb(new Error('ShieldDOS: No Certificate Found'));
+    }
+};
 
 // Redis Client (Publisher)
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
@@ -83,6 +153,8 @@ import { handleChallenge } from './middleware/challenge.middleware';
 import { isWafAttack } from './middleware/waf.middleware';
 import { serveCachedResponse, interceptAndCacheResponse } from './middleware/cache.middleware';
 import { isBlacklistedIp } from './middleware/reputation.middleware';
+import { inspectGraphQLPayload } from './middleware/graphql-inspector.middleware';
+import { handleWaitingRoom } from './middleware/waiting-room.middleware';
 
 // Hard limits for DDoS mitigation
 const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
@@ -154,6 +226,26 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
 
     const host = req.headers.host;
 
+    // ACME HTTP-01 Let's Encrypt Challenge Responder
+    if (req.url?.startsWith('/.well-known/acme-challenge/')) {
+        const token = req.url.split('/').pop();
+        if (token) {
+            try {
+                const keyAuth = await redis.get(`shield:acme:${token}`);
+                if (keyAuth) {
+                    res.writeHead(200, { 'Content-Type': 'text/plain' });
+                    res.end(keyAuth);
+                } else {
+                    res.writeHead(404);
+                    res.end('ShieldDOS ACME Challenge Failed: Token expired or not found.');
+                }
+            } catch (e) {
+                res.writeHead(500); res.end('ACME Redis Error');
+            }
+            return; // Terminate request here for ACME challenges
+        }
+    }
+
     // 3. Real-IP extraction (Honor X-Forwarded-For if behind a Load Balancer, else socket IP)
     const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
     const ip = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : rawIp[0];
@@ -188,6 +280,9 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
     try {
         const site = await resolveSite(host, req, res);
         if (!site) return;
+
+        // Inject the Site data onto the Node.js Request object for the proxyRes Auto-WAF analyzer downstream
+        (req as any).shieldSite = site;
 
         // 0. Rate Limiting using Redis
         // We check if there's a specific rate limit or use a global one
@@ -230,6 +325,16 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         }
 
         // --- SECURITY MIDDLEWARE LAYERS ---
+
+        // Layer 0.5: Distributed Virtual Waiting Room
+        if (site.waitingRoomEnabled) {
+            try {
+                const isQueued = await handleWaitingRoom(req, res, site, redis);
+                if (isQueued) return; // Request trapped in queue or redirected
+            } catch (wrError) {
+                console.error('[Waiting Room Pipeline Error]', wrError);
+            }
+        }
 
         // Layer 1: Bot Filter
         if (site.botProtection) {
@@ -279,6 +384,19 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
                     country
                 }).catch(err => console.error('API Log Error:', err.message));
 
+                return;
+            }
+        }
+
+        // Layer 1.6: Deep GraphQL / JSON AST Inspection (CPU Exhaustion Deflector)
+        let safePayloadStream: any = undefined;
+        if (site.graphqlInspectionEnabled) {
+            const inspectedStream = inspectGraphQLPayload(req, res, 6); // Max Depth = 6 
+            if (inspectedStream) {
+                // Use the safe stream to route traffic, as original `req` was consumed by our inspector
+                safePayloadStream = inspectedStream;
+            } else if (res.writableEnded || req.socket.destroyed) {
+                // If the stream analyzer actively killed the request because of toxic depths, abort routing!
                 return;
             }
         }
@@ -381,27 +499,33 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
             return;
         }
 
-        // 5. Proxy Request: Layer 7 Geo-Routing
+        // 5. Proxy Request: Layer 7 Geo-Routing w/ Zero-Downtime Failover
         let selectedOriginIp = '';
         if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
             const visitorRegion = getRegionFromCountry(country);
-            // 1. Try exact region match
-            let matchedOrigin = site.targetIp.find((o: any) => o.region === visitorRegion);
-            // 2. Try GLOBAL default
-            if (!matchedOrigin) {
-                matchedOrigin = site.targetIp.find((o: any) => o.region === 'GLOBAL');
+            const healthyOrigins = site.targetIp.filter((o: any) => o.isDown !== true);
+
+            if (healthyOrigins.length > 0) {
+                // 1. Try exact region match
+                let matchedOrigin = healthyOrigins.find((o: any) => o.region === visitorRegion);
+                // 2. Try GLOBAL default
+                if (!matchedOrigin) {
+                    matchedOrigin = healthyOrigins.find((o: any) => o.region === 'GLOBAL');
+                }
+                // 3. Fallback to the first healthy origin
+                if (!matchedOrigin) {
+                    matchedOrigin = healthyOrigins[0];
+                }
+                selectedOriginIp = matchedOrigin.ip;
             }
-            // 3. Fallback to the first available origin
-            if (!matchedOrigin) {
-                matchedOrigin = site.targetIp[0];
-            }
-            selectedOriginIp = matchedOrigin.ip;
         } else if (typeof site.targetIp === 'string') {
             selectedOriginIp = site.targetIp; // Fallback for old records
         }
 
         if (!selectedOriginIp) {
-            res.writeHead(502); res.end('ShieldDOS: No Valid Origin Servers Configured.'); return;
+            res.writeHead(502, { 'Content-Type': site.customErrorPage502 ? 'text/html' : 'text/plain' });
+            res.end(site.customErrorPage502 || 'ShieldDOS: 502 Bad Gateway - All Origin Servers are Offline.');
+            return;
         }
 
         const target = selectedOriginIp.startsWith('http') ? selectedOriginIp : `http://${selectedOriginIp}`;
@@ -420,7 +544,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         proxy.web(req, res, {
             target,
             changeOrigin,
-            secure: false
+            secure: false,
+            buffer: safePayloadStream // <--- ShieldDOS AST Stream Injection
         }, (err) => {
             console.error('[Proxy Error] Upstream failed:', err);
             if (!res.headersSent) {
@@ -468,10 +593,14 @@ const wsUpgradeHandler = async (req: http.IncomingMessage, socket: any, head: an
     let selectedOriginIp = '';
     if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
         const visitorRegion = getRegionFromCountry(country);
-        let matchedOrigin = site.targetIp.find((o: any) => o.region === visitorRegion)
-            || site.targetIp.find((o: any) => o.region === 'GLOBAL')
-            || site.targetIp[0];
-        selectedOriginIp = matchedOrigin.ip;
+        const healthyOrigins = site.targetIp.filter((o: any) => o.isDown !== true);
+
+        if (healthyOrigins.length > 0) {
+            let matchedOrigin = healthyOrigins.find((o: any) => o.region === visitorRegion)
+                || healthyOrigins.find((o: any) => o.region === 'GLOBAL')
+                || healthyOrigins[0];
+            selectedOriginIp = matchedOrigin.ip;
+        }
     } else if (typeof site.targetIp === 'string') {
         selectedOriginIp = site.targetIp;
     }

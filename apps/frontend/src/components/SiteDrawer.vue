@@ -89,6 +89,82 @@
                         </div>
                     </div>
 
+                    <!-- Auto-WAF ML Card -->
+                    <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between group hover:border-zinc-700 transition-colors">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-2 rounded-lg bg-orange-500/10 text-orange-500">
+                                <Cpu class="w-5 h-5" />
+                            </div>
+                            <button @click="$emit('toggle-autowaf')" 
+                                class="w-10 h-5 rounded-full relative transition-colors focus:outline-none"
+                                :class="site.autoWafEnabled ? 'bg-orange-600' : 'bg-zinc-800'">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                                :class="site.autoWafEnabled ? 'left-6' : 'left-1'"></div>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1">Auto-WAF ML</h3>
+                            <p class="text-[10px] text-zinc-400 leading-tight">Autonomously deploy Under Attack Mode upon HTTP L7 anomaly detection.</p>
+                        </div>
+                    </div>
+
+                    <!-- GraphQL AST Inspector Card -->
+                    <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between group hover:border-zinc-700 transition-colors">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-500">
+                                <Network class="w-5 h-5" />
+                            </div>
+                            <button @click="$emit('toggle-graphql')" 
+                                class="w-10 h-5 rounded-full relative transition-colors focus:outline-none"
+                                :class="site.graphqlInspectionEnabled ? 'bg-indigo-600' : 'bg-zinc-800'">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                                :class="site.graphqlInspectionEnabled ? 'left-6' : 'left-1'"></div>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1">Deep AST Inspector</h3>
+                            <p class="text-[10px] text-zinc-400 leading-tight">Drop deeply nested JSON/GraphQL payloads mid-stream at the Edge.</p>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Waiting Room Card -->
+                    <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between group hover:border-zinc-700 transition-colors">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-2 rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
+                                <Timer class="w-5 h-5" />
+                            </div>
+                            <button @click="$emit('toggle-waitingroom')" 
+                                class="w-10 h-5 rounded-full relative transition-colors focus:outline-none"
+                                :class="site.waitingRoomEnabled ? 'bg-fuchsia-600' : 'bg-zinc-800'">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                                :class="site.waitingRoomEnabled ? 'left-6' : 'left-1'"></div>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1">Virtual Waiting Room</h3>
+                            <p class="text-[10px] text-zinc-400 leading-tight">Enqueue massive traffic spikes in Redis to shield backend databases.</p>
+                        </div>
+                    </div>
+
+                    <!-- Auto-SSL Let's Encrypt Card -->
+                    <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col justify-between group hover:border-zinc-700 transition-colors">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-500">
+                                <Lock class="w-5 h-5" />
+                            </div>
+                            <button @click="$emit('toggle-autossl')" 
+                                class="w-10 h-5 rounded-full relative transition-colors focus:outline-none"
+                                :class="site.autoSslEnabled ? 'bg-cyan-600' : 'bg-zinc-800'">
+                                <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                                :class="site.autoSslEnabled ? 'left-6' : 'left-1'"></div>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white mb-1">Zero-Touch Auto SSL</h3>
+                            <p class="text-[10px] text-zinc-400 leading-tight">Let the Proxy autonomously manage Let's Encrypt TLS certificates.</p>
+                        </div>
+                    </div>
+
                     <!-- Under Attack Mode Card (Full Width Span) -->
                     <div class="md:col-span-2 bg-gradient-to-r from-red-950/20 to-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm flex items-center justify-between group hover:border-red-900/50 transition-colors">
                         <div class="flex gap-4 items-center">
@@ -199,7 +275,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { X, RefreshCw, ShieldCheck, Bot, AlertTriangle } from 'lucide-vue-next';
+import { X, RefreshCw, ShieldCheck, Bot, AlertTriangle, Cpu, Network, Timer, Lock } from 'lucide-vue-next';
 import UptimeChart from './UptimeChart.vue';
 import FirewallRules from './FirewallRules.vue';
 
@@ -216,7 +292,11 @@ const emit = defineEmits([
     'toggle-security', 
     'update-rate',
     'update-pages',
-    'update-turnstile'
+    'update-turnstile',
+    'toggle-autowaf',
+    'toggle-graphql',
+    'toggle-waitingroom',
+    'toggle-autossl'
 ]);
 
 const activeSubTab = ref<'rules' | 'advanced'>('rules');

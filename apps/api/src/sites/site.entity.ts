@@ -43,6 +43,29 @@ export class Site {
     @Column({ type: 'varchar', nullable: true })
     turnstileSecretKey: string;
 
+    // --- PHASE 7 ENTERPRISE FEATURES ---
+
+    @Column({ default: false })
+    graphqlInspectionEnabled: boolean; // Analyzes AST Depth
+
+    @Column({ default: false })
+    autoWafEnabled: boolean; // ML Traffic Shaping
+
+    @Column({ default: false })
+    waitingRoomEnabled: boolean; // Virtual Queue System
+
+    @Column({ type: 'int', default: 500 })
+    waitingRoomThreshold: number; // Max connections before queuing
+
+    @Column({ default: false })
+    autoSslEnabled: boolean; // ACME HTTP-01 Let's Encrypt
+
+    @Column({ type: 'text', nullable: true })
+    sslCert: string;
+
+    @Column({ type: 'text', nullable: true })
+    sslKey: string;
+
     @OneToMany(() => FirewallRule, (rule) => rule.site)
     firewallRules: FirewallRule[];
 

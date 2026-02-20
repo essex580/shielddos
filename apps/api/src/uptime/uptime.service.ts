@@ -23,21 +23,39 @@ export class UptimeService {
         const sites = await this.sitesRepository.find({ where: { isActive: true } });
 
         for (const site of sites) {
-            await this.pingSite(site);
+            let statusChanged = false;
+
+            if (Array.isArray(site.targetIp)) {
+                // Ping EVERY origin in the multi-origin loadbalancer
+                for (let i = 0; i < site.targetIp.length; i++) {
+                    const origin = site.targetIp[i];
+                    if (!origin.ip) continue;
+
+                    const newStatus = await this.pingSite(site, origin.ip);
+                    const isDown = newStatus === 'down';
+
+                    // Only write to Postgres if the state actually changed to save DB cycles
+                    if (origin.isDown !== isDown) {
+                        site.targetIp[i].isDown = isDown;
+                        statusChanged = true;
+                    }
+                }
+            } else if (typeof site.targetIp === 'string') {
+                // Legacy support for single string IPs
+                await this.pingSite(site, site.targetIp as string);
+            }
+
+            if (statusChanged) {
+                await this.sitesRepository.save(site);
+                this.logger.verbose(`Updated Origin Failover State for ${site.domain}`);
+            }
         }
     }
 
-    private async pingSite(site: Site) {
-        let primaryIp = '';
-        if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
-            primaryIp = site.targetIp[0].ip;
-        } else if (typeof site.targetIp === 'string') {
-            primaryIp = site.targetIp;
-        }
+    private async pingSite(site: Site, targetIpStr: string): Promise<'up' | 'down'> {
+        if (!targetIpStr) return 'down';
 
-        if (!primaryIp) return; // Silent skip if no origins registered yet
-
-        const target = primaryIp.startsWith('http') ? primaryIp : `http://${primaryIp}`;
+        const targetUrl = targetIpStr.startsWith('http') ? targetIpStr : `http://${targetIpStr}`;
         const startTime = Date.now();
 
         let status: 'up' | 'down' = 'up';
@@ -46,7 +64,7 @@ export class UptimeService {
 
         try {
             // Send a lightweight HEAD request to check availability
-            await axios.head(target, {
+            await axios.head(targetUrl, {
                 timeout: 5000,
                 headers: { 'User-Agent': 'ShieldDOS-Uptime-Monitor/1.0' }
             });
@@ -55,20 +73,19 @@ export class UptimeService {
             status = 'down';
             errorMessage = error.message;
             // Differentiate between timeouts and explicit 5xx errors from proxy
-            this.logger.warn(`Site Origin Down: ${site.domain} (${target}) - ${errorMessage}`);
+            this.logger.warn(`Site Origin Down: ${site.domain} (${targetUrl}) - ${errorMessage}`);
         }
 
         const log = this.uptimeRepository.create({
             site: { id: site.id },
-            targetIp: site.targetIp,
+            targetIp: targetIpStr,
             status,
             latencyMs,
             errorMessage
         });
 
         await this.uptimeRepository.save(log);
-
-        // Optional logic: if site goes down, send email, webhook, etc.
+        return status;
     }
 
     async getUptimeStats(siteId: string, user: any) {

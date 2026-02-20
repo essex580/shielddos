@@ -108,6 +108,10 @@
       @update-rate="updateRateLimit"
       @update-pages="updateCustomPages"
       @update-turnstile="updateTurnstileKeys"
+      @toggle-autowaf="toggleAutoWaf"
+      @toggle-graphql="toggleGraphql"
+      @toggle-waitingroom="toggleWaitingRoom"
+      @toggle-autossl="toggleAutoSsl"
     />
 
     <!-- Add Modal -->
@@ -176,6 +180,10 @@ interface Site {
   customErrorPage403?: string;
   customErrorPage404?: string;
   customErrorPage502?: string;
+  autoWafEnabled: boolean;
+  graphqlInspectionEnabled: boolean;
+  waitingRoomEnabled: boolean;
+  autoSslEnabled: boolean;
   verificationStatus?: {
     resolvedIp: string;
     isConfigured: boolean;
@@ -317,6 +325,60 @@ const updateRateLimit = async (newLimit: number) => {
         console.error("Failed to update rate limit", e);
     }
 }
+
+// Phase 7 Enterprise Toggles
+const toggleAutoWaf = async () => {
+    if (!selectedSite.value) return;
+    const newVal = !selectedSite.value.autoWafEnabled;
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { autoWafEnabled: newVal });
+        selectedSite.value.autoWafEnabled = newVal;
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) s.autoWafEnabled = newVal;
+    } catch (e) {
+        console.error("Failed to toggle AutoWAF", e);
+    }
+}
+
+const toggleGraphql = async () => {
+    if (!selectedSite.value) return;
+    const newVal = !selectedSite.value.graphqlInspectionEnabled;
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { graphqlInspectionEnabled: newVal });
+        selectedSite.value.graphqlInspectionEnabled = newVal;
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) s.graphqlInspectionEnabled = newVal;
+    } catch (e) {
+        console.error("Failed to toggle GraphQL AST Inspector", e);
+    }
+}
+
+const toggleWaitingRoom = async () => {
+    if (!selectedSite.value) return;
+    const newVal = !selectedSite.value.waitingRoomEnabled;
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { waitingRoomEnabled: newVal });
+        selectedSite.value.waitingRoomEnabled = newVal;
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) s.waitingRoomEnabled = newVal;
+    } catch (e) {
+        console.error("Failed to toggle Virtual Waiting Room", e);
+    }
+}
+
+const toggleAutoSsl = async () => {
+    if (!selectedSite.value) return;
+    const newVal = !selectedSite.value.autoSslEnabled;
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { autoSslEnabled: newVal });
+        selectedSite.value.autoSslEnabled = newVal;
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) s.autoSslEnabled = newVal;
+    } catch (e) {
+        console.error("Failed to toggle Auto SSL", e);
+    }
+}
+
 
 const updateCustomPages = async (payload: { type: '403' | '502', value: string }) => {
     if (!selectedSite.value) return;
