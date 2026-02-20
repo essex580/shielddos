@@ -27,11 +27,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
         ScheduleModule.forRoot(),
         TypeOrmModule.forRoot({
             type: 'postgres',
-            host: process.env.DB_HOST || 'postgres',
-            port: 5432,
-            username: process.env.DB_USER || 'shield_user',
-            password: process.env.DB_PASSWORD || 'shield_password',
-            database: process.env.DB_NAME || 'shield_db',
+            url: process.env.DATABASE_URL || 'postgres://shield_user:shield_password@localhost:5432/shield_db',
             entities: [Site, Analytics, User, FirewallRule, Uptime],
             synchronize: true, // Auto-create tables (dev only)
         }),

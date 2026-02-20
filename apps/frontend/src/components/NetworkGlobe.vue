@@ -5,22 +5,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import Globe from 'globe.gl';
-
-// Suppress THREE.Clock deprecation warning from globe.gl internls
-const originalWarn = console.warn;
-console.warn = (...args) => {
-    if (typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) return;
-    originalWarn.apply(console, args);
-};
-
-const props = defineProps<{
-    attacks: any[] // { startLat, startLng, endLat, endLng, color }
-}>();
 
 const globeContainer = ref<HTMLElement | null>(null);
 let world: any = null;
+let attackInterval: any;
 
 onMounted(() => {
     if (!globeContainer.value) return;
@@ -43,8 +33,35 @@ onMounted(() => {
     world.controls().autoRotateSpeed = 1.2;
     world.controls().enableZoom = false; // keep it clean
 
-    // Initial render
-    updateGlobe(props.attacks);
+    // Maintain a raw javascript array natively to avoid Vue Proxy interference, which causes 3D stuttering!
+    const arcsData: any[] = [];
+    const pointsData: any[] = [];
+
+    attackInterval = setInterval(() => {
+        const startLat = (Math.random() - 0.5) * 160;
+        const startLng = (Math.random() - 0.5) * 360;
+        const endLat = (Math.random() - 0.5) * 160;
+        const endLng = (Math.random() - 0.5) * 360;
+        const isBlocked = Math.random() > 0.4;
+
+        arcsData.push({
+            startLat, startLng, endLat, endLng,
+            color: isBlocked ? '#ef4444' : '#10b981'
+        });
+        
+        pointsData.push({ lat: startLat, lng: startLng });
+        pointsData.push({ lat: endLat, lng: endLng });
+
+        if (arcsData.length > 25) {
+            arcsData.shift();
+            pointsData.shift();
+            pointsData.shift();
+        }
+
+        // Updating the globe with native arrays prevents the dash generator from completely restarting!
+        world.arcsData(arcsData);
+        world.pointsData(pointsData);
+    }, 400);
 
     // Make it responsive
     const resizeObserver = new ResizeObserver(() => {
@@ -57,35 +74,11 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+    if (attackInterval) clearInterval(attackInterval);
     if (world) {
         // cleanup if possible
         const controls = world.controls();
         if (controls) controls.dispose();
     }
 });
-
-const updateGlobe = (data: any[]) => {
-    if (!world) return;
-    world.arcsData(data);
-    
-    // Add points for all start/end locations
-    const pointsData: any[] = [];
-    data.forEach(arc => {
-        pointsData.push({ lat: arc.startLat, lng: arc.startLng });
-        pointsData.push({ lat: arc.endLat, lng: arc.endLng });
-    });
-    world.pointsData(pointsData);
-};
-
-watch(() => props.attacks, (newVal) => {
-    // CRITICAL BUG FIX: Deep clone the array before passing to globe.gl
-    // 3D libraries mutate data objects to attach internal __threeObj properties.
-    // If passed a Vue Reactive Proxy, this triggers an infinite update loop that crashes the browser!
-    try {
-        const rawData = JSON.parse(JSON.stringify(newVal));
-        updateGlobe(rawData);
-    } catch (e) {
-        console.error('Globe update error', e);
-    }
-}, { deep: true });
 </script>
