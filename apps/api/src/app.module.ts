@@ -9,9 +9,13 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { User } from './users/user.entity';
 import { EventsModule } from './events/events.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { UptimeModule } from './uptime/uptime.module';
+import { Uptime } from './uptime/uptime.entity';
 
 @Module({
     imports: [
+        ScheduleModule.forRoot(),
         TypeOrmModule.forRoot({
             type: 'postgres',
             host: process.env.DB_HOST || 'postgres',
@@ -19,7 +23,7 @@ import { EventsModule } from './events/events.module';
             username: process.env.DB_USER || 'shield_user',
             password: process.env.DB_PASSWORD || 'shield_password',
             database: process.env.DB_NAME || 'shield_db',
-            entities: [Site, Analytics, User, FirewallRule],
+            entities: [Site, Analytics, User, FirewallRule, Uptime],
             synchronize: true, // Auto-create tables (dev only)
         }),
         SitesModule,
@@ -27,6 +31,7 @@ import { EventsModule } from './events/events.module';
         AuthModule,
         UsersModule,
         EventsModule,
+        UptimeModule,
     ],
     controllers: [],
     providers: [],

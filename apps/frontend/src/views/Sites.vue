@@ -91,8 +91,14 @@
     <!-- Edit/Security Modal -->
     <TerminalModal v-if="showEditModal && selectedSite" @close="showEditModal = false">
       <template #title>Node Security Configuration</template>
-      <div class="space-y-6">
-        <div class="flex items-center justify-between">
+      <div class="space-y-6 flex flex-col w-full min-w-full lg:min-w-[600px] max-w-2xl mx-auto">
+        
+        <!-- Uptime Chart -->
+        <div class="pb-4 border-b border-zinc-800">
+            <UptimeChart :site-id="selectedSite.id" />
+        </div>
+
+        <div class="flex items-center justify-between mt-2">
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase">Under Attack Mode</label>
               <p class="text-[10px] text-zinc-600">JS Challenge for all visitors</p>
@@ -195,6 +201,7 @@ import axios from 'axios'
 import { Globe, Plus, Trash2, Shield, ShieldCheck, Bot, Loader2, Settings } from 'lucide-vue-next';
 import FirewallRules from '../components/FirewallRules.vue';
 import TerminalModal from '../components/TerminalModal.vue';
+import UptimeChart from '../components/UptimeChart.vue';
 
 interface Site {
   id: string;
