@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.imgur.com/noMD1pz.png" alt="Shield" width="300" />
+  <img src="assets/logo.png" alt="ShielDDoS Logo" width="300" />
   
   **Next-Generation Edge Routing, WAF, and Global Threat Mitigation Network**
 
@@ -36,32 +36,34 @@ graph TD
     User([🌐 Global Visitor]) -->|HTTPS Request| ShieldProxy{ShieldDOS Edge Proxy}
     
     subgraph Layer 0: Network Protection
-        ShieldProxy -->|Check| RedisMesh[(Redis Global Mesh)]
+        ShieldProxy -->|Check IP| RedisMesh[(Redis Global Mesh)]
         RedisMesh -- "Banned?" --> Drop([❌ Drop Connection])
     end
 
     subgraph Layer 7: Application Defense
-        ShieldProxy -->|Heuristic Engine| WAF[🛡️ AI Anomaly WAF]
-        WAF -- "High Entropy" --> AttackLog([📝 Log Attack & Block])
-        WAF --> Challenge[🔐 Turnstile Captcha]
+        ShieldProxy -->|Heuristic Engine| WAF[🛡️ WAF & Tarpit Flow]
+        WAF -- "Malicious Scope" --> Tarpit([🕳️ Infinite TCP Tarpit])
+        WAF --> Challenge[🔐 Cryptographic Turnstile]
         Challenge -- "Failed" --> JSBlock([🛑 Interstitial Block])
     end
 
     subgraph CDN & Caching
-        Challenge -->|Verified Clearance| Cache[⚡ Edge Redis Cache]
+        Challenge -->|Verified Clearance| Cache[⚡ Edge Redis CDN]
         Cache -- "Cache Hit" --> ReturnCache([Return Static Asset])
     end
 
     subgraph Geo-Routing & Fallback
         Cache -- "Cache Miss" --> Router[🌍 Geo-Router]
-        Router -->|EU Region| DE_Origin[🇩🇪 EU Origin Server]
-        Router -->|US Region| US_Origin[🇺🇸 US Origin Server]
-        Router -->|Global Fallback| Main_Origin[🌎 Main Datacenter]
+        Router -->|Live Node| Target1[📍 Primary Origin Node]
+        Router -->|Live Node| Target2[📍 Fallback Origin Node]
     end
 
-    API((NestJS API)) <-->|PostgreSQL Sync| ShieldProxy
-    API <-->|WebSocket Stream| Dashboard[💻 Vue 3D Dashboard]
-    ShieldProxy -.->|Live Telemetry| API
+    subgraph Command & Control
+        NestJS((NestJS API)) <-->|TypeORM / Postgres| ShieldProxy
+        NestJS <-->|GraphQL Telemetry| Dashboard[💻 Vue WebGL Dashboard]
+        NestJS <-->|Forensic Traces| AI[🤖 Google Gemini AI]
+        ShieldProxy -.->|Redis PubSub| NestJS
+    end
 ```
 
 ---
