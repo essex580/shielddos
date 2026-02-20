@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Shield.png" alt="Shield" width="120" />
-  
-  # ShieldDOS Enterprise Edition
+  <img src="https://i.imgur.com/noMD1pz.png" alt="Shield" width="120" />
   
   **Next-Generation Edge Routing, WAF, and Global Threat Mitigation Network**
 
