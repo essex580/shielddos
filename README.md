@@ -13,7 +13,7 @@
   </p>
 
   <p align="center">
-    <i>Protect your infrastructure. Cache your static assets. Drop malicious traffic at the Edge. Observe the battlefield in 3D.</i>
+    <i>Protect your infrastructure.</i>
   </p>
 </div>
 
