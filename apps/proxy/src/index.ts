@@ -55,6 +55,49 @@ const REQUEST_TIMEOUT = 30000; // 30 seconds (Slowloris protection)
 const server = http.createServer(appHandler);
 const httpsServer = https.createServer(sslOptions, appHandler);
 
+
+async function resolveSite(host: string, req: http.IncomingMessage, res: http.ServerResponse | null) {
+    try {
+        // 1. Check if site exists in DB (Exact or Wildcard)
+        const hostname = host.split(':')[0];
+        let site = null;
+
+        // Try exact match first
+        const exactResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [hostname]);
+        if (exactResult.rows.length > 0) {
+            site = exactResult.rows[0];
+        } else {
+            // Try wildcard match (*.domain.com)
+            const parts = hostname.split('.');
+            if (parts.length > 2) {
+                for (let i = 1; i < parts.length - 1; i++) {
+                    const wildcardDomain = '*.' + parts.slice(i).join('.');
+                    const wcResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [wildcardDomain]);
+                    if (wcResult.rows.length > 0) {
+                        site = wcResult.rows[0];
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!site) {
+            if (res) {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('ShieldDOS: Domain not claimed or inactive. To secure this host, add it to your Dashboard.');
+            } else if (req.socket) {
+                req.socket.destroy();
+            }
+            return null;
+        }
+
+        return site;
+    } catch (e) {
+        console.error('DB Site Resolve Error:', e);
+        return null;
+    }
+}
+
 async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
     // 1. Slowloris Mitigation (Drop slow connections)
     res.setTimeout(REQUEST_TIMEOUT, () => {
@@ -94,42 +137,13 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         console.log(`[Global Blacklist] Dropped connection from known malicious actor: ${ip}`);
         res.writeHead(403);
         res.end('ShieldDOS: Access Denied (Global Threat Intelligence Match)');
-        req.socket.destroy(); // Hard kill against known bad actors
+        req.socket.destroy();
         return;
     }
 
     try {
-        // Global rate limiting logic moved below site loading to allow per-site config
-
-        // 1. Check if site exists in DB (Exact or Wildcard)
-        const hostname = host.split(':')[0];
-        let site = null;
-
-        // Try exact match first
-        const exactResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [hostname]);
-        if (exactResult.rows.length > 0) {
-            site = exactResult.rows[0];
-        } else {
-            // Try wildcard match (*.domain.com)
-            const parts = hostname.split('.');
-            if (parts.length > 2) {
-                // E.g., api.dev.example.com -> check *.dev.example.com, then *.example.com
-                for (let i = 1; i < parts.length - 1; i++) {
-                    const wildcardDomain = '*.' + parts.slice(i).join('.');
-                    const wcResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [wildcardDomain]);
-                    if (wcResult.rows.length > 0) {
-                        site = wcResult.rows[0];
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!site) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('ShieldDOS: Domain not claimed or inactive. To secure this host, add it to your Dashboard.');
-            return;
-        }
+        const site = await resolveSite(host, req, res);
+        if (!site) return;
 
         // 0. Rate Limiting using Redis
         // We check if there's a specific rate limit or use a global one
@@ -356,3 +370,32 @@ server.listen(PORT, () => {
 httpsServer.listen(HTTPS_PORT, () => {
     console.log(`[HTTPS] ShieldDOS Edge TLS Terminated on port ${HTTPS_PORT}`);
 });
+
+// Add WebSocket Upgrade Handlers for HMR & Socket.io
+const wsUpgradeHandler = async (req: http.IncomingMessage, socket: any, head: any) => {
+    const host = req.headers.host;
+    if (!host) {
+        socket.destroy();
+        return;
+    }
+
+    const site = await resolveSite(host, req, null);
+    if (!site) {
+        socket.destroy();
+        return;
+    }
+
+    const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+
+    proxy.ws(req, socket, head, {
+        target,
+        secure: false,
+        changeOrigin: true
+    }, (err) => {
+        console.error('[WS Proxy Error] Upstream failed:', err);
+        socket.destroy();
+    });
+};
+
+server.on('upgrade', wsUpgradeHandler);
+httpsServer.on('upgrade', wsUpgradeHandler);
