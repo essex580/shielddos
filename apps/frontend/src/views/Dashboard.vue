@@ -59,10 +59,24 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       
+      <!-- Globe Section -->
+      <div class="lg:col-span-2 terminal-card min-h-[400px] flex flex-col p-4 border border-zinc-800">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-[11px] uppercase tracking-wider border-b border-zinc-800/50 pb-2">
+            <Globe class="w-3.5 h-3.5 text-blue-500" /> Global Threat Surface (Live)
+          </h3>
+          <div class="flex-1 w-full bg-black/50 rounded-lg overflow-hidden border-zinc-800/50 relative">
+             <NetworkGlobe :attacks="liveAttacks" />
+             <div class="absolute bottom-3 left-3 flex gap-4 text-[9px] font-mono select-none">
+                 <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Valid Request</div>
+                 <div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Threat Blocked</div>
+             </div>
+          </div>
+      </div>
+
       <!-- Chart Section -->
-      <div class="lg:col-span-3 terminal-card min-h-[350px]">
+      <div class="lg:col-span-2 terminal-card min-h-[350px]">
         <h3 class="font-bold text-white mb-6 flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
             <Activity class="w-4 h-4 text-blue-500" /> Traffic Flow
         </h3>
@@ -171,6 +185,8 @@ import { io, Socket } from 'socket.io-client'
 import { Activity, RefreshCw, BarChart3, ShieldAlert, Globe, Users, List, Zap, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-vue-next';
 import { Line } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
+import NetworkGlobe from '../components/NetworkGlobe.vue';
+import { getGeoCoordinates } from '../utils/geo';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
@@ -191,6 +207,9 @@ const stats = ref({
     activeSites: 0,
     uniqueIps: 0,
 })
+
+const siteStore = ref<any[]>([]);
+const liveAttacks = ref<any[]>([]);
 
 const logs = ref<Log[]>([])
 const loading = ref(false)
@@ -298,6 +317,7 @@ const fetchData = async () => {
     loading.value = true;
     try {
         const siteRes = await axios.get(`${API_URL}/sites`);
+        siteStore.value = siteRes.data;
         stats.value.activeSites = siteRes.data.filter((s: any) => s.isActive).length;
 
         const logRes = await axios.get(`${API_URL}/analytics`);
@@ -355,10 +375,38 @@ onMounted(() => {
     socket.value.on('new_traffic', (data: any) => {
         logs.value.unshift(data);
         updateStats();
-        // Update chart live? Or just refresh periodically? Or increment last bucket?
-        // For simplicity, let's refresh chart every 10s to be accurate, 
-        // or just append if we match current minute.
-        // Let's just create interval for chart refresh (separate from list)
+
+        // 3D WebGL Globe Logic
+        // Calculate Attacker Geo
+        const attackerGeo = getGeoCoordinates(data.country || 'XX');
+        
+        // Calculate Destination Geo (Target Origin Node)
+        let destGeo = getGeoCoordinates('US'); // Global Fallback
+        const originSite = siteStore.value.find(s => s.id === data.siteId);
+        
+        if (originSite && Array.isArray(originSite.targetIp) && originSite.targetIp.length > 0) {
+            const firstRegion = originSite.targetIp[0].region;
+            if (firstRegion === 'EU') destGeo = getGeoCoordinates('DE');
+            else if (firstRegion === 'AS') destGeo = getGeoCoordinates('JP');
+            else if (firstRegion === 'OC') destGeo = getGeoCoordinates('AU');
+            else if (firstRegion === 'AF') destGeo = getGeoCoordinates('ZA');
+            else if (firstRegion === 'SA') destGeo = getGeoCoordinates('BR');
+        }
+
+        // Add 3D Arc
+        liveAttacks.value.push({
+            startLat: attackerGeo.lat,
+            startLng: attackerGeo.lng,
+            endLat: destGeo.lat,
+            endLng: destGeo.lng,
+            color: data.blocked ? '#ef4444' : '#10b981', // Red vs Green
+            timestamp: Date.now()
+        });
+
+        // Delete old arcs so the GPU doesn't melt
+        if (liveAttacks.value.length > 50) {
+            liveAttacks.value.shift();
+        }
     });
     
     // Refresh chart every 10s

@@ -12,11 +12,17 @@ axios.interceptors.request.use(config => {
     return config;
 });
 
-// Navigate to login on 401
+// Navigate to login on 401, but prevent infinite refresh loops
+let isReloading = false;
 axios.interceptors.response.use(response => response, error => {
-    if (error.response && error.response.status === 401) {
+    const isAuthEndpoint = error.config && error.config.url && (error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register'));
+
+    if (error.response && error.response.status === 401 && !isAuthEndpoint) {
         localStorage.removeItem('access_token');
-        window.location.reload();
+        if (!isReloading) {
+            isReloading = true;
+            window.location.reload();
+        }
     }
     return Promise.reject(error);
 });

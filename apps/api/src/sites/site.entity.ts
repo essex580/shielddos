@@ -10,8 +10,8 @@ export class Site {
     @Column()
     domain: string;
 
-    @Column()
-    targetIp: string;
+    @Column({ type: 'jsonb', default: [] })
+    targetIp: any; // e.g [{ ip: "1.1.1.1", region: "EU" }]
 
     @Column({ default: true })
     isActive: boolean;
@@ -36,6 +36,12 @@ export class Site {
 
     @Column({ type: 'text', nullable: true })
     customErrorPage502: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    turnstileSiteKey: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    turnstileSecretKey: string;
 
     @OneToMany(() => FirewallRule, (rule) => rule.site)
     firewallRules: FirewallRule[];

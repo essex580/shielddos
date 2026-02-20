@@ -39,7 +39,12 @@
                   {{ site.isActive ? 'Active' : 'Offline' }}
                 </div>
               </td>
-              <td class="p-3 text-zinc-500">{{ site.targetIp }}</td>
+              <td class="p-3 text-zinc-500">
+                <div v-for="(origin, i) in site.targetIp" :key="i" class="flex items-center gap-2 mb-1">
+                    <span class="px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] font-bold text-zinc-400">{{ origin.region }}</span>
+                    <span>{{ origin.ip }}</span>
+                </div>
+              </td>
               <td class="p-3">
                 <div class="flex flex-col gap-1">
                   <div class="flex items-center gap-2 text-xs font-semibold" :class="site.wafEnabled ? 'text-emerald-500' : 'text-zinc-600'">
@@ -102,24 +107,49 @@
       @toggle-security="toggleSecurityLevel"
       @update-rate="updateRateLimit"
       @update-pages="updateCustomPages"
+      @update-turnstile="updateTurnstileKeys"
     />
 
     <!-- Add Modal -->
     <TerminalModal v-if="showAddModal" @close="showAddModal = false">
       <template #title>Initialize New Node</template>
-      <div class="space-y-4">
+      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
         <div>
           <label class="block text-xs font-semibold text-zinc-400 mb-1">Target Domain</label>
           <input v-model="newSite.domain" type="text" placeholder="example.com" class="terminal-input w-full p-2 text-sm">
         </div>
+        
         <div>
-          <label class="block text-xs font-semibold text-zinc-400 mb-1">Origin Server IP</label>
-          <input v-model="newSite.targetIp" type="text" placeholder="192.168.1.1" class="terminal-input w-full p-2 text-sm">
+          <div class="flex items-center justify-between mb-2">
+              <label class="block text-xs font-semibold text-zinc-400">Origin Servers (Geo-Routing)</label>
+              <button @click="addOrigin" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 text-white px-2 py-1 rounded-md transition-colors flex items-center gap-1">
+                  <Plus class="w-3 h-3"/> Add Origin
+              </button>
+          </div>
+          
+          <div class="space-y-2">
+              <div v-for="(origin, index) in newSite.targetIp" :key="index" class="flex gap-2">
+                  <input v-model="origin.ip" type="text" placeholder="192.168.1.1" class="terminal-input flex-1 p-2 text-sm">
+                  <select v-model="origin.region" class="terminal-input p-2 text-xs bg-zinc-950 text-white border-zinc-700 w-32">
+                      <option value="EU">Europe (EU)</option>
+                      <option value="US">North America</option>
+                      <option value="AS">Asia (AS)</option>
+                      <option value="OC">Oceania (OC)</option>
+                      <option value="AF">Africa (AF)</option>
+                      <option value="SA">South America</option>
+                      <option value="GLOBAL">Global / Default</option>
+                  </select>
+                  <button v-if="newSite.targetIp.length > 1" @click="removeOrigin(index)" class="text-zinc-500 hover:text-red-500 p-2 border border-zinc-800 rounded flex-shrink-0">
+                      <Trash2 class="w-4 h-4"/>
+                  </button>
+              </div>
+          </div>
+          <p class="text-[10px] text-zinc-500 mt-2">Add multiple origins to intelligently route visitors to the closest server geographically.</p>
         </div>
       </div>
       <template #footer>
         <button @click="showAddModal = false" class="terminal-button-outline">Cancel</button>
-        <button @click="addSite" :disabled="!newSite.domain || !newSite.targetIp" class="terminal-button disabled:opacity-50">Initialize</button>
+        <button @click="addSite" :disabled="!newSite.domain || newSite.targetIp.some(o => !o.ip)" class="terminal-button disabled:opacity-50">Initialize</button>
       </template>
     </TerminalModal>
   </div>
@@ -135,12 +165,14 @@ import SiteDrawer from '../components/SiteDrawer.vue';
 interface Site {
   id: string;
   domain: string;
-  targetIp: string;
+  targetIp: { ip: string, region: string }[];
   isActive: boolean;
   securityLevel: string;
   botProtection: boolean;
   wafEnabled: boolean;
   rateLimit: number;
+  turnstileSiteKey?: string;
+  turnstileSecretKey?: string;
   customErrorPage403?: string;
   customErrorPage404?: string;
   customErrorPage502?: string;
@@ -155,7 +187,18 @@ const sites = ref<Site[]>([])
 const loading = ref(true)
 const showAddModal = ref(false)
 const selectedSite = ref<any>(null)
-const newSite = ref({ domain: '', targetIp: '' })
+const newSite = ref<{domain: string, targetIp: {ip: string, region: string}[]}>({ 
+    domain: '', 
+    targetIp: [{ ip: '', region: 'GLOBAL' }] 
+})
+
+const addOrigin = () => {
+    newSite.value.targetIp.push({ ip: '', region: 'GLOBAL' });
+}
+
+const removeOrigin = (index: number) => {
+    newSite.value.targetIp.splice(index, 1);
+}
 
 const isDrawerOpen = ref(false)
 
@@ -193,7 +236,7 @@ const addSite = async () => {
         const res = await axios.post(`${API_URL}/sites`, newSite.value);
         sites.value.push(res.data);
         showAddModal.value = false;
-        newSite.value = { domain: '', targetIp: '' }
+        newSite.value = { domain: '', targetIp: [{ ip: '', region: 'GLOBAL' }] }
     } catch (e) {
         console.error("Failed to add site", e);
         alert('Failed to add site');
@@ -292,6 +335,25 @@ const updateCustomPages = async (payload: { type: '403' | '502', value: string }
         }
     } catch (e) {
         console.error("Failed to update custom pages", e);
+    }
+}
+
+const updateTurnstileKeys = async (payload: { key: 'site' | 'secret', value: string }) => {
+    if (!selectedSite.value) return;
+    
+    const dbKey = payload.key === 'site' ? 'turnstileSiteKey' : 'turnstileSecretKey';
+    selectedSite.value[dbKey] = payload.value;
+    
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, {
+            [dbKey]: payload.value
+        });
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) {
+            s[dbKey] = payload.value;
+        }
+    } catch (e) {
+        console.error("Failed to update turnstile keys", e);
     }
 }
 

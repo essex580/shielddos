@@ -14,6 +14,23 @@ const PORT = process.env.PORT || 8080;
 const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 const API_URL = process.env.API_URL || 'http://localhost:3000';
 
+function getRegionFromCountry(countryCode: string): string {
+    const eu = ['AD', 'AL', 'AT', 'AX', 'BA', 'BE', 'BG', 'BY', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FO', 'FR', 'GB', 'GG', 'GI', 'GR', 'HR', 'HU', 'IE', 'IM', 'IS', 'IT', 'JE', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD', 'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'PT', 'RO', 'RS', 'RU', 'SE', 'SI', 'SJ', 'SM', 'UA', 'VA'];
+    const us = ['US', 'CA', 'MX'];
+    const as = ['AF', 'AM', 'AZ', 'BD', 'BH', 'BN', 'BT', 'CC', 'CN', 'CX', 'CY', 'GE', 'HK', 'ID', 'IL', 'IN', 'IO', 'IQ', 'IR', 'JO', 'JP', 'KG', 'KH', 'KP', 'KR', 'KW', 'KZ', 'LA', 'LB', 'LK', 'MM', 'MN', 'MO', 'MV', 'MY', 'NP', 'OM', 'PH', 'PK', 'PS', 'QA', 'SA', 'SG', 'SY', 'TH', 'TJ', 'TM', 'TR', 'TW', 'UZ', 'VN', 'YE'];
+    const oc = ['AS', 'AU', 'CK', 'FJ', 'FM', 'GU', 'KI', 'MH', 'MP', 'NC', 'NF', 'NR', 'NU', 'NZ', 'PF', 'PG', 'PN', 'PW', 'SB', 'TK', 'TO', 'TV', 'UM', 'VU', 'WF', 'WS'];
+    const af = ['AO', 'BF', 'BI', 'BJ', 'BW', 'CD', 'CF', 'CG', 'CI', 'CM', 'CV', 'DJ', 'DZ', 'EG', 'EH', 'ER', 'ET', 'GA', 'GH', 'GM', 'GN', 'GQ', 'GW', 'KE', 'KM', 'LR', 'LS', 'LY', 'MA', 'MG', 'ML', 'MR', 'MU', 'MW', 'MZ', 'NA', 'NE', 'NG', 'RE', 'RW', 'SC', 'SD', 'SH', 'SL', 'SN', 'SO', 'ST', 'SZ', 'TD', 'TG', 'TN', 'TZ', 'UG', 'YT', 'ZA', 'ZM', 'ZW'];
+    const sa = ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'FK', 'GF', 'GY', 'PE', 'PY', 'SR', 'UY', 'VE'];
+
+    if (eu.includes(countryCode)) return 'EU';
+    if (us.includes(countryCode)) return 'US';
+    if (as.includes(countryCode)) return 'AS';
+    if (oc.includes(countryCode)) return 'OC';
+    if (af.includes(countryCode)) return 'AF';
+    if (sa.includes(countryCode)) return 'SA';
+    return 'GLOBAL';
+}
+
 // SSL Configuration
 let sslOptions: https.ServerOptions = {};
 try {
@@ -32,8 +49,27 @@ try {
     console.error('[SSL] Error loading certs:', e);
 }
 
-// Redis Client
+// Redis Client (Publisher)
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+
+// Redis Mesh: Global Ban Synchronization (Subscriber)
+const redisSubscriber = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const globalBannedIps = new Set<string>(); // Ultra-fast Layer 0 memory cache
+
+redisSubscriber.subscribe('shield:ban', (err, count) => {
+    if (err) console.error('[Redis Mesh] Failed to subscribe to shield:ban', err);
+    else console.log(`[Redis Mesh] Subscribed to ${count} channels for global sync.`);
+});
+
+redisSubscriber.on('message', (channel, message) => {
+    if (channel === 'shield:ban') {
+        globalBannedIps.add(message);
+        // We could add a sweeping mechanism to clear old IPs, but for now it's fine. 
+        // A TTL eviction could be implemented using map with timestamps.
+
+        // Log locally if we want, but keeping it silent for performance
+    }
+});
 
 // DB Configuration (Keep for fast site lookup)
 const client = new Client({
@@ -132,6 +168,14 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         return;
     }
 
+    // Layer 0.0: Redis Mesh Global Distributed Ban (Ultra-Fast Memory Lookup)
+    if (globalBannedIps.has(ip)) {
+        res.writeHead(403);
+        res.end('ShieldDOS: Access Denied (Globally Banned by Edge Mesh)');
+        req.socket.destroy();
+        return;
+    }
+
     // Layer 0.1: Global IP Reputation Blacklist
     if (isBlacklistedIp(req)) {
         console.log(`[Global Blacklist] Dropped connection from known malicious actor: ${ip}`);
@@ -158,6 +202,10 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
             }
             if (current > limit) {
                 console.log(`[RateLimit] Blocked ${ip} targeted at ${host} (${current}/${limit})`);
+
+                // Publish to Global Redis Mesh
+                redis.publish('shield:ban', ip).catch(e => console.error('[Mesh Error]', e));
+                globalBannedIps.add(ip); // Add locally instantly
 
                 // Async log rate limit block
                 axios.post(`${API_URL}/analytics`, {
@@ -211,6 +259,11 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         if (site.wafEnabled) {
             if (isWafAttack(req)) {
                 console.log(`[WAF] Blocked attack from ${ip} targeting ${host}${req.url}`);
+
+                // Publish to Global Redis Mesh for severe violations
+                redis.publish('shield:ban', ip).catch(e => console.error('[Mesh Error]', e));
+                globalBannedIps.add(ip); // Add locally instantly
+
                 res.writeHead(403, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
                 res.end(site.customErrorPage403 || 'ShieldDOS: WAF Blocked Request (Malicious Pattern Detected)');
 
@@ -232,7 +285,7 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
 
         // Layer 2: Challenge / Under Attack Mode
         if (site.securityLevel === 'under_attack') {
-            const handled = handleChallenge(req, res);
+            const handled = await handleChallenge(req, res, site);
             if (handled) {
                 // Request was intercepted by challenge (served HTML or verified)
                 return;
@@ -298,7 +351,7 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
                             blockReason = `Advanced Rule Blocked (${custom.field} ${custom.operator})`;
                             break;
                         } else if (custom.action === 'CHALLENGE') {
-                            const handled = handleChallenge(req, res);
+                            const handled = await handleChallenge(req, res, site);
                             if (handled) return; // Intercepted by challenge page
                         }
                     }
@@ -328,8 +381,30 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
             return;
         }
 
-        // 5. Proxy Request
-        const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+        // 5. Proxy Request: Layer 7 Geo-Routing
+        let selectedOriginIp = '';
+        if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
+            const visitorRegion = getRegionFromCountry(country);
+            // 1. Try exact region match
+            let matchedOrigin = site.targetIp.find((o: any) => o.region === visitorRegion);
+            // 2. Try GLOBAL default
+            if (!matchedOrigin) {
+                matchedOrigin = site.targetIp.find((o: any) => o.region === 'GLOBAL');
+            }
+            // 3. Fallback to the first available origin
+            if (!matchedOrigin) {
+                matchedOrigin = site.targetIp[0];
+            }
+            selectedOriginIp = matchedOrigin.ip;
+        } else if (typeof site.targetIp === 'string') {
+            selectedOriginIp = site.targetIp; // Fallback for old records
+        }
+
+        if (!selectedOriginIp) {
+            res.writeHead(502); res.end('ShieldDOS: No Valid Origin Servers Configured.'); return;
+        }
+
+        const target = selectedOriginIp.startsWith('http') ? selectedOriginIp : `http://${selectedOriginIp}`;
         const changeOrigin = true;
 
         // Inject Real-IP Headers for upstream origin Server
@@ -340,7 +415,7 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
 
         interceptAndCacheResponse(req, res, redis, host);
 
-        // console.log(`[Proxy] Routing ${host}${req.url} -> ${target} (${ip} - ${country})`); 
+        // console.log(`[Proxy] Routing ${host}${req.url} -> ${target} (${ip} - ${country} / ${getRegionFromCountry(country)})`); 
 
         proxy.web(req, res, {
             target,
@@ -385,7 +460,28 @@ const wsUpgradeHandler = async (req: http.IncomingMessage, socket: any, head: an
         return;
     }
 
-    const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
+    const ip = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : rawIp[0];
+    const geo = geoip.lookup(ip);
+    const country = geo ? geo.country : 'XX';
+
+    let selectedOriginIp = '';
+    if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
+        const visitorRegion = getRegionFromCountry(country);
+        let matchedOrigin = site.targetIp.find((o: any) => o.region === visitorRegion)
+            || site.targetIp.find((o: any) => o.region === 'GLOBAL')
+            || site.targetIp[0];
+        selectedOriginIp = matchedOrigin.ip;
+    } else if (typeof site.targetIp === 'string') {
+        selectedOriginIp = site.targetIp;
+    }
+
+    if (!selectedOriginIp) {
+        socket.destroy();
+        return;
+    }
+
+    const target = selectedOriginIp.startsWith('http') ? selectedOriginIp : `http://${selectedOriginIp}`;
 
     proxy.ws(req, socket, head, {
         target,

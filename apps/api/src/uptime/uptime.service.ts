@@ -28,7 +28,16 @@ export class UptimeService {
     }
 
     private async pingSite(site: Site) {
-        const target = site.targetIp.startsWith('http') ? site.targetIp : `http://${site.targetIp}`;
+        let primaryIp = '';
+        if (Array.isArray(site.targetIp) && site.targetIp.length > 0) {
+            primaryIp = site.targetIp[0].ip;
+        } else if (typeof site.targetIp === 'string') {
+            primaryIp = site.targetIp;
+        }
+
+        if (!primaryIp) return; // Silent skip if no origins registered yet
+
+        const target = primaryIp.startsWith('http') ? primaryIp : `http://${primaryIp}`;
         const startTime = Date.now();
 
         let status: 'up' | 'down' = 'up';

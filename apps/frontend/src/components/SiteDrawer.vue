@@ -21,7 +21,12 @@
                             {{ site.isActive ? 'Active' : 'Offline' }}
                         </div>
                         <span class="text-zinc-700 text-[10px]">•</span>
-                        <div class="text-[10px] text-zinc-500 font-mono">{{ site.targetIp }}</div>
+                        <div class="text-[10px] text-zinc-500 font-mono flex gap-2">
+                            <span v-for="(origin, i) in site.targetIp" :key="i" class="flex items-center gap-1">
+                                <span class="px-1 rounded bg-zinc-800 text-[8px] font-bold text-zinc-400">{{ origin.region }}</span>
+                                {{ origin.ip }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 
@@ -120,6 +125,31 @@
                         <!-- Advanced Settings Tab Content -->
                         <div v-if="activeSubTab === 'advanced'" class="space-y-6 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             
+                            <!-- Turnstile Keys -->
+                            <div class="bg-zinc-900/40 border border-zinc-800/60 rounded-lg p-4 space-y-4">
+                                <h4 class="text-xs font-bold text-zinc-300 border-b border-zinc-800/50 pb-2 mb-3">Cloudflare Turnstile Integration</h4>
+                                
+                                <div>
+                                    <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Turnstile Site Key</label>
+                                    <input type="text" 
+                                        :value="site.turnstileSiteKey"
+                                        @change="(e) => $emit('update-turnstile', { key: 'site', value: (e.target as HTMLInputElement).value })"
+                                        class="w-full bg-zinc-950 border border-zinc-700/50 p-2 text-white font-mono text-xs rounded-md focus:outline-none focus:border-blue-500 placeholder-zinc-800"
+                                        placeholder="0x4AAAAAA... (Public Key)">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Turnstile Secret Key</label>
+                                    <input type="password" 
+                                        :value="site.turnstileSecretKey"
+                                        @change="(e) => $emit('update-turnstile', { key: 'secret', value: (e.target as HTMLInputElement).value })"
+                                        class="w-full bg-zinc-950 border border-zinc-700/50 p-2 text-white font-mono text-xs rounded-md focus:outline-none focus:border-red-500 placeholder-zinc-800"
+                                        placeholder="0x4AAAAAA... (Private Key)">
+                                </div>
+                                
+                                <p class="text-[10px] text-zinc-500">Required for <strong>Under Attack Mode</strong> to function correctly. Get these from your Cloudflare Dashboard.</p>
+                            </div>
+
                             <div class="bg-zinc-900/40 border border-zinc-800/60 rounded-lg p-4">
                                 <div class="flex items-center justify-between mb-2">
                                     <label class="text-xs font-bold text-zinc-300">Rate Limiting</label>
@@ -185,7 +215,8 @@ const emit = defineEmits([
     'toggle-bot', 
     'toggle-security', 
     'update-rate',
-    'update-pages'
+    'update-pages',
+    'update-turnstile'
 ]);
 
 const activeSubTab = ref<'rules' | 'advanced'>('rules');
