@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.imgur.com/noMD1pz.png" alt="Shield" width="120" />
+  <img src="https://i.imgur.com/noMD1pz.png" alt="Shield" width="500" />
   
   **Next-Generation Edge Routing, WAF, and Global Threat Mitigation Network**
 
