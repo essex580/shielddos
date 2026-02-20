@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-full h-[400px] bg-[#09090b] rounded-lg overflow-hidden border border-zinc-800" ref="globeContainer">
+  <div class="relative w-full h-[400px] bg-transparent overflow-hidden" ref="globeContainer">
       <!-- We will mount globe.gl here -->
   </div>
 </template>
@@ -27,7 +27,7 @@ onMounted(() => {
 
     world = (Globe as any)()(globeContainer.value)
         .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
-        .backgroundColor('#09090b')
+        .backgroundColor('rgba(0,0,0,0)')
         .arcColor('color')
         .arcDashLength(0.4)
         .arcDashGap(0.2)
