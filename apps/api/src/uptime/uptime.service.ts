@@ -17,7 +17,7 @@ export class UptimeService {
         private sitesRepository: Repository<Site>,
     ) { }
 
-    @Cron(CronExpression.EVERY_5_MINUTES)
+    @Cron(CronExpression.EVERY_5_MINUTES, { name: 'origin-uptime-monitor' })
     async monitorOrigins() {
         this.logger.debug('Running Global Origin Uptime Checks...');
         const sites = await this.sitesRepository.find({ where: { isActive: true } });
