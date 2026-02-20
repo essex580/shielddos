@@ -26,7 +26,6 @@
 
 By terminating SSL, inspecting packets in real-time, and evaluating complex threat intelligence rules *before* traffic ever reaches your backend container, ShieldDOS guarantees maximum uptime, pristine origin server logs, and advanced threat elimination.
 
-![Dashboard Preview](https://via.placeholder.com/1000x500/09090b/3b82f6?text=Dashboard+Live+Tail+\(+Placeholder+\))
 
 ---
 
