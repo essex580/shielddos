@@ -101,13 +101,33 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
     try {
         // Global rate limiting logic moved below site loading to allow per-site config
 
-        // 1. Check if site exists in DB
-        const result = await client.query('SELECT * FROM site WHERE domain = $1', [host.split(':')[0]]);
-        const site = result.rows[0];
+        // 1. Check if site exists in DB (Exact or Wildcard)
+        const hostname = host.split(':')[0];
+        let site = null;
+
+        // Try exact match first
+        const exactResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [hostname]);
+        if (exactResult.rows.length > 0) {
+            site = exactResult.rows[0];
+        } else {
+            // Try wildcard match (*.domain.com)
+            const parts = hostname.split('.');
+            if (parts.length > 2) {
+                // E.g., api.dev.example.com -> check *.dev.example.com, then *.example.com
+                for (let i = 1; i < parts.length - 1; i++) {
+                    const wildcardDomain = '*.' + parts.slice(i).join('.');
+                    const wcResult = await client.query('SELECT * FROM site WHERE domain = $1 AND "isActive" = true', [wildcardDomain]);
+                    if (wcResult.rows.length > 0) {
+                        site = wcResult.rows[0];
+                        break;
+                    }
+                }
+            }
+        }
 
         if (!site) {
-            res.writeHead(404);
-            res.end('ShieldDOS: Site not configured');
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('ShieldDOS: Domain not claimed or inactive. To secure this host, add it to your Dashboard.');
             return;
         }
 

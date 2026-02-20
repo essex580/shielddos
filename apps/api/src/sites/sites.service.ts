@@ -53,7 +53,9 @@ export class SitesService {
         if (!site) throw new Error('Site not found or access denied');
 
         try {
-            const ips = await resolve4(site.domain);
+            // If checking a wildcard like *.example.com, strip the *. for DNS resolution
+            const domainToResolve = site.domain.startsWith('*.') ? site.domain.substring(2) : site.domain;
+            const ips = await resolve4(domainToResolve);
             const resolvedIp = ips[0];
 
             let publicIp = process.env.PUBLIC_IP;
