@@ -1,6 +1,6 @@
 <div align="center">
-## ShielDDoS
-  ---
+  <h1>🛡️ ShielDDoS</h1>
+  <hr>
   **Next-Generation Edge Routing, WAF, and Global Threat Mitigation Network**
 
   <p align="center">
