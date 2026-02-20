@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <title>ShieldDOS Dashboard</title>
-    <!-- Suppress THREE.Clock deprecation warning from globe.gl internals before ES Modules load -->
-    <script>
-      const originalWarn = console.warn;
-      console.warn = function(...args) {
-          if (typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) return;
-          originalWarn.apply(console, args);
-      };
-    </script>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>ShielDDoS Dashboard</title>
+  <!-- Suppress THREE.Clock deprecation warning from globe.gl internals before ES Modules load -->
+  <script>
+    const originalWarn = console.warn;
+    console.warn = function (...args) {
+      if (typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) return;
+      originalWarn.apply(console, args);
+    };
+  </script>
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
