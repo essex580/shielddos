@@ -1,6 +1,10 @@
 <template>
   <div class="flex items-center justify-center min-h-screen bg-zinc-950 text-sm">
     <div class="w-full max-w-md p-8 border border-zinc-800 bg-zinc-950 rounded-xl shadow-lg relative">
+      <button @click="$emit('go-back')" class="absolute top-6 left-6 text-zinc-600 hover:text-white transition-colors" title="Back to Home">
+          <ArrowLeft class="w-5 h-5" />
+      </button>
+      
       <div class="flex justify-center mb-8">
         <ShieldCheck class="w-16 h-16 text-white stroke-1" />
       </div>
@@ -55,7 +59,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
-import { ShieldCheck, Loader2, ShieldAlert, Lock } from 'lucide-vue-next';
+import { ShieldCheck, Loader2, ShieldAlert, Lock, ArrowLeft } from 'lucide-vue-next';
 
 const username = ref('')
 const password = ref('')
@@ -63,7 +67,7 @@ const isRegistering = ref(false)
 const loading = ref(false)
 const error = ref('')
 
-const emit = defineEmits(['login-success'])
+const emit = defineEmits(['login-success', 'go-back'])
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 

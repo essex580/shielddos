@@ -5,9 +5,11 @@ import Dashboard from './views/Dashboard.vue'
 import Sites from './views/Sites.vue'
 import ThreatLogs from './views/ThreatLogs.vue'
 import Login from './views/Login.vue'
+import Landing from './views/Landing.vue'
 
 const currentPage = ref('dashboard')
 const isAuthenticated = ref(!!localStorage.getItem('access_token'))
+const currentAuthView = ref<'landing' | 'login'>('landing')
 
 const onLoginSuccess = () => {
     isAuthenticated.value = true
@@ -35,7 +37,8 @@ const currentView = computed(() => {
 
 <template>
   <div v-if="!isAuthenticated" class="h-screen w-screen bg-[#020617] overflow-hidden">
-      <Login @login-success="onLoginSuccess" />
+      <Landing v-if="currentAuthView === 'landing'" @go-to-login="currentAuthView = 'login'" />
+      <Login v-else @login-success="onLoginSuccess" @go-back="currentAuthView = 'landing'" />
   </div>
 
   <div v-else class="flex h-screen bg-zinc-950 text-zinc-300 font-mono text-sm selection:bg-white selection:text-black">
