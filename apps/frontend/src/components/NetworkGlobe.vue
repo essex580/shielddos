@@ -5,8 +5,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import Globe from 'globe.gl';
+
+const props = defineProps<{
+    attacks: any[], // { startLat, startLng, endLat, endLng, color }
+    simulate?: boolean
+}>();
 
 const globeContainer = ref<HTMLElement | null>(null);
 let world: any = null;
@@ -33,35 +38,67 @@ onMounted(() => {
     world.controls().autoRotateSpeed = 1.2;
     world.controls().enableZoom = false; // keep it clean
 
-    // Maintain a raw javascript array natively to avoid Vue Proxy interference, which causes 3D stuttering!
+    // Maintain a raw javascript array natively to avoid Vue Proxy interference
     const arcsData: any[] = [];
     const pointsData: any[] = [];
 
-    attackInterval = setInterval(() => {
-        const startLat = (Math.random() - 0.5) * 160;
-        const startLng = (Math.random() - 0.5) * 360;
-        const endLat = (Math.random() - 0.5) * 160;
-        const endLng = (Math.random() - 0.5) * 360;
-        const isBlocked = Math.random() > 0.4;
+    if (props.simulate) {
+        attackInterval = setInterval(() => {
+            const startLat = (Math.random() - 0.5) * 160;
+            const startLng = (Math.random() - 0.5) * 360;
+            const endLat = (Math.random() - 0.5) * 160;
+            const endLng = (Math.random() - 0.5) * 360;
+            const isBlocked = Math.random() > 0.4;
 
-        arcsData.push({
-            startLat, startLng, endLat, endLng,
-            color: isBlocked ? '#ef4444' : '#10b981'
-        });
-        
-        pointsData.push({ lat: startLat, lng: startLng });
-        pointsData.push({ lat: endLat, lng: endLng });
+            arcsData.push({
+                startLat, startLng, endLat, endLng,
+                color: isBlocked ? '#ef4444' : '#10b981'
+            });
+            
+            pointsData.push({ lat: startLat, lng: startLng });
+            pointsData.push({ lat: endLat, lng: endLng });
 
-        if (arcsData.length > 25) {
-            arcsData.shift();
-            pointsData.shift();
-            pointsData.shift();
-        }
+            if (arcsData.length > 25) {
+                arcsData.shift();
+                pointsData.shift();
+                pointsData.shift();
+            }
 
-        // Updating the globe with native arrays prevents the dash generator from completely restarting!
-        world.arcsData(arcsData);
-        world.pointsData(pointsData);
-    }, 400);
+            world.arcsData(arcsData);
+            world.pointsData(pointsData);
+        }, 400);
+    } else {
+        const seenIds = new Set();
+        watch(() => props.attacks, (newVal) => {
+            if (!world || !newVal) return;
+            
+            newVal.forEach(attack => {
+                const id = `${attack.timestamp}-${attack.startLat}-${attack.endLat}`;
+                if (!seenIds.has(id)) {
+                    seenIds.add(id);
+                    arcsData.push({
+                        startLat: attack.startLat,
+                        startLng: attack.startLng,
+                        endLat: attack.endLat,
+                        endLng: attack.endLng,
+                        color: attack.color
+                    });
+                    pointsData.push({ lat: attack.startLat, lng: attack.startLng });
+                    pointsData.push({ lat: attack.endLat, lng: attack.endLng });
+                }
+            });
+
+            while (arcsData.length > 30) {
+                arcsData.shift();
+                pointsData.shift();
+                pointsData.shift();
+            }
+
+            // Updating the globe with native arrays prevents the dash generator from completely restarting!
+            world.arcsData(arcsData);
+            world.pointsData(pointsData);
+        }, { deep: true, immediate: true });
+    }
 
     // Make it responsive
     const resizeObserver = new ResizeObserver(() => {

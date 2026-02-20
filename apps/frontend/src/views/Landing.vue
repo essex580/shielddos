@@ -33,7 +33,7 @@
         
         <!-- Globe on the Left -->
         <div class="order-2 lg:order-1 relative w-full h-[350px] lg:h-[450px] pointer-events-none flex items-center justify-center">
-           <NetworkGlobe :attacks="simulatedAttacks" />
+           <NetworkGlobe :attacks="[]" :simulate="true" />
         </div>
 
         <!-- Text on the Right -->
@@ -130,38 +130,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
 import { Shield, Github, ArrowRight, BrainCircuit, HardDrive, Lock, Zap, Globe, BarChart3, Terminal } from 'lucide-vue-next';
 import NetworkGlobe from '../components/NetworkGlobe.vue';
 
 defineEmits(['go-to-login']);
-
-const simulatedAttacks = ref<any[]>([]);
-let attackInterval: any;
-
-onMounted(() => {
-    // Simulate complex Enterprise edge traffic
-    attackInterval = setInterval(() => {
-        const startLat = (Math.random() - 0.5) * 160;
-        const startLng = (Math.random() - 0.5) * 360;
-        const endLat = (Math.random() - 0.5) * 160;
-        const endLng = (Math.random() - 0.5) * 360;
-        
-        const isBlocked = Math.random() > 0.4;
-        
-        simulatedAttacks.value.push({
-            startLat, startLng, endLat, endLng,
-            color: isBlocked ? '#ef4444' : '#10b981', // Red for blocked, Green for Cache hit
-            timestamp: Date.now()
-        });
-
-        if (simulatedAttacks.value.length > 25) {
-            simulatedAttacks.value.shift();
-        }
-    }, 400); // Flawless fluent stream
-});
-
-onUnmounted(() => {
-    if (attackInterval) clearInterval(attackInterval);
-});
 </script>
