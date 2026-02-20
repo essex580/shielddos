@@ -1,11 +1,14 @@
 <template>
-  <TerminalModal @close="$emit('close')">
-    <template #title>
-        <span class="flex items-center gap-2">
-            <ShieldAlert class="w-4 h-4 text-zinc-400" />
+  <div class="h-full">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800">
+        <span class="flex items-center gap-2 text-white font-bold text-sm">
+            <ShieldAlert class="w-4 h-4 text-emerald-500" />
             Firewall Rules / {{ siteDomain }}
         </span>
-    </template>
+        <button @click="$emit('close')" class="text-zinc-500 hover:text-white transition-colors">
+            <X class="w-4 h-4" />
+        </button>
+    </div>
     
     <div class="space-y-6">
           <!-- Add Rule Form -->
@@ -101,14 +104,13 @@
             </div>
           </div>
       </div>
-  </TerminalModal>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { X, Plus, Trash2, ShieldAlert, Loader2, CheckCircle, AlertTriangle } from 'lucide-vue-next';
-import TerminalModal from './TerminalModal.vue';
 
 const props = defineProps<{
   siteId: string,

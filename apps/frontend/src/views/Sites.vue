@@ -30,55 +30,144 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-zinc-800 text-zinc-400">
-          <tr v-for="site in sites" :key="site.id" class="hover:bg-zinc-900 transition-colors group">
-            <td class="p-3 pl-4">
-               <div class="font-bold text-white group-hover:text-zinc-200">{{ site.domain }}</div>
-               <div class="flex items-center gap-2 text-[10px] font-semibold mt-1" :class="site.isActive ? 'text-green-500' : 'text-zinc-500'">
-                <span class="w-1.5 h-1.5 rounded-full" :class="site.isActive ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-zinc-500'"></span>
-                {{ site.isActive ? 'Active' : 'Offline' }}
-              </div>
-            </td>
-            <td class="p-3 text-zinc-500">{{ site.targetIp }}</td>
-            <td class="p-3">
-              <div class="flex flex-col gap-1">
-                <div class="flex items-center gap-2 text-xs font-semibold" :class="site.wafEnabled ? 'text-emerald-500' : 'text-zinc-600'">
-                  <ShieldCheck class="w-3 h-3" /> WAF: {{ site.wafEnabled ? 'On' : 'Off' }}
+          <template v-for="site in sites" :key="site.id">
+            <tr class="hover:bg-zinc-900 transition-colors group">
+              <td class="p-3 pl-4">
+                 <div class="font-bold text-white group-hover:text-zinc-200">{{ site.domain }}</div>
+                 <div class="flex items-center gap-2 text-[10px] font-semibold mt-1" :class="site.isActive ? 'text-green-500' : 'text-zinc-500'">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="site.isActive ? 'bg-green-500 shadow-[0_0_5px_#22c55e]' : 'bg-zinc-500'"></span>
+                  {{ site.isActive ? 'Active' : 'Offline' }}
                 </div>
-                <div class="flex items-center gap-2 text-xs font-semibold" :class="site.botProtection ? 'text-blue-500' : 'text-zinc-600'">
-                  <Bot class="w-3 h-3" /> Bot: {{ site.botProtection ? 'On' : 'Off' }}
-                </div>
-              </div>
-            </td>
-            <td class="p-3">
-               <div v-if="site.verificationStatus" class="flex flex-col gap-1">
-                  <div class="text-[10px] font-semibold flex items-center gap-1" :class="site.verificationStatus.isConfigured ? 'text-green-500' : 'text-red-500'">
-                    <span v-if="site.verificationStatus.isConfigured" class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                    <span v-else class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                    {{ site.verificationStatus.isConfigured ? 'Connected' : 'Disconnected' }}
+              </td>
+              <td class="p-3 text-zinc-500">{{ site.targetIp }}</td>
+              <td class="p-3">
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2 text-xs font-semibold" :class="site.wafEnabled ? 'text-emerald-500' : 'text-zinc-600'">
+                    <ShieldCheck class="w-3 h-3" /> WAF: {{ site.wafEnabled ? 'On' : 'Off' }}
                   </div>
-                  <div class="text-[10px] text-zinc-500 font-mono">{{ site.verificationStatus.resolvedIp }}</div>
-               </div>
-               <button v-else @click="verifySite(site)" class="text-[10px] font-semibold text-zinc-500 hover:text-white border border-zinc-700 rounded-md px-2 py-0.5">
-                  Verify DNS
-               </button>
-            </td>
-            <td class="p-3 text-right pr-6">
-              <div class="flex justify-end gap-2">
-                <button @click="openSettings(site)" class="border border-zinc-700 rounded-md hover:bg-zinc-800 text-zinc-300 px-2 py-1 text-xs font-semibold transition-colors" title="Settings">
-                  <Settings class="w-3 h-3" />
-                </button>
-                <button @click="purgeCache(site)" class="border border-zinc-700 bg-blue-900/30 text-blue-400 rounded-md hover:bg-blue-900/50 px-2 py-1 text-xs font-semibold transition-colors" title="Purge Edge Cache">
-                  Purge Cache
-                </button>
-                <button @click="openRules(site)" class="border border-zinc-700 rounded-md hover:bg-zinc-800 text-zinc-300 px-2 py-1 text-xs font-semibold transition-colors">
-                  Rules
-                </button>
-                <button @click="deleteSite(site.id)" class="text-zinc-600 hover:text-red-500 transition-colors p-1" title="Delete">
-                  <Trash2 class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
+                  <div class="flex items-center gap-2 text-xs font-semibold" :class="site.botProtection ? 'text-blue-500' : 'text-zinc-600'">
+                    <Bot class="w-3 h-3" /> Bot: {{ site.botProtection ? 'On' : 'Off' }}
+                  </div>
+                </div>
+              </td>
+              <td class="p-3">
+                 <div v-if="site.verificationStatus" class="flex flex-col gap-1">
+                    <div class="text-[10px] font-semibold flex items-center gap-1" :class="site.verificationStatus.isConfigured ? 'text-green-500' : 'text-red-500'">
+                      <span v-if="site.verificationStatus.isConfigured" class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      <span v-else class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                      {{ site.verificationStatus.isConfigured ? 'Connected' : 'Disconnected' }}
+                    </div>
+                    <div class="text-[10px] text-zinc-500 font-mono">{{ site.verificationStatus.resolvedIp }}</div>
+                 </div>
+                 <button v-else @click="verifySite(site)" class="text-[10px] font-semibold text-zinc-500 hover:text-white border border-zinc-700 rounded-md px-2 py-0.5">
+                    Verify DNS
+                 </button>
+              </td>
+              <td class="p-3 text-right pr-6">
+                <div class="flex justify-end gap-2">
+                  <button @click="toggleTab(site.id, 'settings')" :class="expandedSiteId === site.id && expandedTab === 'settings' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'" class="border border-zinc-700 rounded-md px-2 py-1 text-xs font-semibold transition-colors" title="Settings">
+                    <Settings class="w-3 h-3" />
+                  </button>
+                  <button @click="purgeCache(site)" class="border border-zinc-700 bg-blue-900/30 text-blue-400 rounded-md hover:bg-blue-900/50 px-2 py-1 text-xs font-semibold transition-colors" title="Purge Edge Cache">
+                    Purge Cache
+                  </button>
+                  <button @click="toggleTab(site.id, 'rules')" :class="expandedSiteId === site.id && expandedTab === 'rules' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800 text-zinc-300'" class="border border-zinc-700 rounded-md px-2 py-1 text-xs font-semibold transition-colors">
+                    Rules
+                  </button>
+                  <button @click="deleteSite(site.id)" class="text-zinc-600 hover:text-red-500 transition-colors p-1" title="Delete">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Expanded Dropdown Row -->
+            <tr v-if="expandedSiteId === site.id">
+              <td colspan="5" class="p-0 bg-zinc-950/80">
+                <div class="border-l-2" :class="expandedTab === 'settings' ? 'border-blue-500' : 'border-emerald-500'">
+                  <div class="p-6">
+                    
+                    <!-- SETTINGS TAB -->
+                    <div v-if="expandedTab === 'settings'" class="space-y-6 flex flex-col w-full min-w-full lg:min-w-[600px] max-w-2xl mx-auto">
+                      <div class="pb-4 border-b border-zinc-800">
+                          <UptimeChart :site-id="site.id" />
+                      </div>
+
+                      <div class="flex items-center justify-between mt-2">
+                          <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Under Attack Mode</label>
+                            <p class="text-[10px] text-zinc-600">JS Challenge for all visitors</p>
+                          </div>
+                          <button @click="toggleSecurityLevel" 
+                            class="w-10 h-5 rounded-full relative transition-colors"
+                            :class="selectedSite.securityLevel === 'under_attack' ? 'bg-red-600' : 'bg-zinc-800'">
+                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                              :class="selectedSite.securityLevel === 'under_attack' ? 'left-6' : 'left-1'"></div>
+                          </button>
+                      </div>
+
+                      <div class="flex items-center justify-between">
+                          <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Bot Protection</label>
+                            <p class="text-[10px] text-zinc-600">Block common automated scripts</p>
+                          </div>
+                          <button @click="toggleBotProtection" 
+                            class="w-10 h-5 rounded-full relative transition-colors"
+                            :class="selectedSite.botProtection ? 'bg-blue-600' : 'bg-zinc-800'">
+                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                              :class="selectedSite.botProtection ? 'left-6' : 'left-1'"></div>
+                          </button>
+                      </div>
+
+                      <div class="flex items-center justify-between">
+                          <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">WAF Filter</label>
+                            <p class="text-[10px] text-zinc-600">Block SQLi, XSS and malicious payloads</p>
+                          </div>
+                          <button @click="toggleWaf" 
+                            class="w-10 h-5 rounded-full relative transition-colors"
+                            :class="selectedSite.wafEnabled ? 'bg-emerald-600' : 'bg-zinc-800'">
+                            <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
+                              :class="selectedSite.wafEnabled ? 'left-6' : 'left-1'"></div>
+                          </button>
+                      </div>
+
+                      <div class="flex items-center justify-between">
+                          <div>
+                            <label class="block text-[10px] font-bold text-zinc-500 uppercase">Rate Limiting</label>
+                            <p class="text-[10px] text-zinc-600">Max requests per minute per IP</p>
+                          </div>
+                          <input type="number" 
+                            v-model.number="selectedSite.rateLimit" 
+                            @change="updateRateLimit"
+                            class="w-20 bg-zinc-950 border border-zinc-700 p-1.5 text-white text-xs rounded-md focus:outline-none focus:border-zinc-500 text-center">
+                      </div>
+
+                      <div class="pt-4 border-t border-zinc-800 space-y-4">
+                          <h3 class="text-xs font-bold text-white uppercase tracking-widest">Custom error pages (HTML)</h3>
+                          
+                          <div>
+                              <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">403 Access Denied (WAF/Bots)</label>
+                              <textarea v-model="selectedSite.customErrorPage403" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Access Denied by WAF</h1></body></html>"></textarea>
+                          </div>
+                          
+                          <div>
+                              <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">502 Bad Gateway (Upstream Down)</label>
+                              <textarea v-model="selectedSite.customErrorPage502" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Origin Server Offline</h1></body></html>"></textarea>
+                          </div>
+                      </div>
+                    </div>
+
+                    <!-- RULES TAB -->
+                    <div v-if="expandedTab === 'rules'" class="w-full max-w-4xl mx-auto">
+                        <FirewallRules :siteId="site.id" :siteDomain="site.domain" />
+                    </div>
+
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
           <tr v-if="sites.length === 0">
             <td colspan="5" class="p-12 text-center text-zinc-500 text-xs border border-zinc-800 rounded-md">
                 No nodes configured
@@ -87,92 +176,6 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Edit/Security Modal -->
-    <TerminalModal v-if="showEditModal && selectedSite" @close="showEditModal = false">
-      <template #title>Node Security Configuration</template>
-      <div class="space-y-6 flex flex-col w-full min-w-full lg:min-w-[600px] max-w-2xl mx-auto">
-        
-        <!-- Uptime Chart -->
-        <div class="pb-4 border-b border-zinc-800">
-            <UptimeChart :site-id="selectedSite.id" />
-        </div>
-
-        <div class="flex items-center justify-between mt-2">
-            <div>
-              <label class="block text-[10px] font-bold text-zinc-500 uppercase">Under Attack Mode</label>
-              <p class="text-[10px] text-zinc-600">JS Challenge for all visitors</p>
-            </div>
-            <button @click="toggleSecurityLevel" 
-              class="w-10 h-5 rounded-full relative transition-colors"
-              :class="selectedSite.securityLevel === 'under_attack' ? 'bg-red-600' : 'bg-zinc-800'">
-              <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                :class="selectedSite.securityLevel === 'under_attack' ? 'left-6' : 'left-1'"></div>
-            </button>
-        </div>
-
-        <div class="flex items-center justify-between">
-            <div>
-              <label class="block text-[10px] font-bold text-zinc-500 uppercase">Bot Protection</label>
-              <p class="text-[10px] text-zinc-600">Block common automated scripts</p>
-            </div>
-            <button @click="toggleBotProtection" 
-              class="w-10 h-5 rounded-full relative transition-colors"
-              :class="selectedSite.botProtection ? 'bg-blue-600' : 'bg-zinc-800'">
-              <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                :class="selectedSite.botProtection ? 'left-6' : 'left-1'"></div>
-            </button>
-        </div>
-
-        <div class="flex items-center justify-between">
-            <div>
-              <label class="block text-[10px] font-bold text-zinc-500 uppercase">WAF Filter</label>
-              <p class="text-[10px] text-zinc-600">Block SQLi, XSS and malicious payloads</p>
-            </div>
-            <button @click="toggleWaf" 
-              class="w-10 h-5 rounded-full relative transition-colors"
-              :class="selectedSite.wafEnabled ? 'bg-emerald-600' : 'bg-zinc-800'">
-              <div class="w-3 h-3 bg-white rounded-full absolute top-1 transition-all"
-                :class="selectedSite.wafEnabled ? 'left-6' : 'left-1'"></div>
-            </button>
-        </div>
-
-        <div class="flex items-center justify-between">
-            <div>
-              <label class="block text-[10px] font-bold text-zinc-500 uppercase">Rate Limiting</label>
-              <p class="text-[10px] text-zinc-600">Max requests per minute per IP</p>
-            </div>
-            <input type="number" 
-              v-model.number="selectedSite.rateLimit" 
-              @change="updateRateLimit"
-              class="w-20 bg-zinc-950 border border-zinc-700 p-1.5 text-white text-xs rounded-md focus:outline-none focus:border-zinc-500 text-center">
-        </div>
-
-        <div class="pt-4 border-t border-zinc-800 space-y-4">
-            <h3 class="text-xs font-bold text-white uppercase tracking-widest">Custom error pages (HTML)</h3>
-            
-            <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">403 Access Denied (WAF/Bots)</label>
-                <textarea v-model="selectedSite.customErrorPage403" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Access Denied by WAF</h1></body></html>"></textarea>
-            </div>
-            
-            <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">502 Bad Gateway (Upstream Down)</label>
-                <textarea v-model="selectedSite.customErrorPage502" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Origin Server Offline</h1></body></html>"></textarea>
-            </div>
-        </div>
-      </div>
-      <template #footer>
-        <button @click="showEditModal = false" class="terminal-button-outline">Done</button>
-      </template>
-    </TerminalModal>
-
-    <!-- Firewall Rules Modal -->
-    <FirewallRules v-if="showRulesModal && selectedSite" 
-        :siteId="selectedSite.id" 
-        :siteDomain="selectedSite.domain" 
-        @close="showRulesModal = false" 
-    />
 
     <!-- Add Modal -->
     <TerminalModal v-if="showAddModal" @close="showAddModal = false">
@@ -225,10 +228,22 @@ interface Site {
 const sites = ref<Site[]>([])
 const loading = ref(true)
 const showAddModal = ref(false)
-const showRulesModal = ref(false)
-const showEditModal = ref(false)
 const selectedSite = ref<any>(null)
 const newSite = ref({ domain: '', targetIp: '' })
+
+const expandedSiteId = ref<string | null>(null)
+const expandedTab = ref<'settings' | 'rules' | null>(null)
+
+const toggleTab = (siteId: string, tab: 'settings' | 'rules') => {
+    if (expandedSiteId.value === siteId && expandedTab.value === tab) {
+        expandedSiteId.value = null;
+        expandedTab.value = null;
+    } else {
+        expandedSiteId.value = siteId;
+        expandedTab.value = tab;
+        selectedSite.value = sites.value.find(s => s.id === siteId);
+    }
+}
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -261,19 +276,13 @@ const deleteSite = async (id: string) => {
     try {
         await axios.delete(`${API_URL}/sites/${id}`);
         sites.value = sites.value.filter(s => s.id !== id);
+        if (expandedSiteId.value === id) {
+            expandedSiteId.value = null;
+            expandedTab.value = null;
+        }
     } catch (e) {
         console.error("Failed to delete site", e);
     }
-}
-
-const openRules = (site: Site) => {
-    selectedSite.value = site;
-    showRulesModal.value = true;
-}
-
-const openSettings = (site: Site) => {
-    selectedSite.value = site;
-    showEditModal.value = true;
 }
 
 const verifySite = async (site: Site) => {
