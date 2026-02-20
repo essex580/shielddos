@@ -25,20 +25,30 @@ export const handleChallenge = async (req: IncomingMessage, res: ServerResponse,
         try {
             // Using '|' delimiter to support IPv4 IPs which naturally contain dots.
             const parts = cookies[COOKIE_NAME].split('|');
+            console.log(`[WAF Debug] Checking Cookie: ${cookies[COOKIE_NAME]} - Parts:`, parts);
             if (parts.length === 3) {
                 const [hash, ipStr, timestamp] = parts;
 
                 // Verify HMAC signature
                 const expectedHash = crypto.createHmac('sha256', SECRET).update(`${ipStr}|${timestamp}`).digest('hex');
+                console.log(`[WAF Debug] Expected Hash: ${expectedHash}, Actual: ${hash}, ClientIP: ${clientIp}, CookieIP: ${ipStr}`);
 
                 if (hash === expectedHash && ipStr === clientIp) {
                     // Verify expiration (30 minutes)
                     if (Date.now() - parseInt(timestamp) < 30 * 60 * 1000) {
+                        console.log(`[WAF Debug] Clearance VALID! Passing through.`);
                         return false; // Valid clearance, pass through to proxy
+                    } else {
+                        console.log(`[WAF Debug] Clearance EXPIRED! (Time delta: ${Date.now() - parseInt(timestamp)})`);
                     }
+                } else {
+                    console.log(`[WAF Debug] Hash MISMATCH or IP mismatch!`);
                 }
+            } else {
+                console.log(`[WAF Debug] Cookie format invalid (parts length != 3).`);
             }
         } catch (e) {
+            console.error(`[WAF Debug] Decryption error:`, e);
             // Invalid cookie format, continue to challenge
         }
     }
