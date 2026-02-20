@@ -70,20 +70,23 @@ graph TD
 
 ## 🛡️ Enterprise Feature Set
 
-### 1. 🌍 Layer 7 Geo-Routing (Multi-Origin Load Balancing)
-Deploy your backend applications across multiple geographical datacenters. ShieldDOS analyzes the incoming client IP, maps it to real-world coordinates iteratively, and dynamically proxies the traffic to the nearest latency-optimized origin server configured in your Site Array. 
+### 1. 🌍 Layer 7 Geo-Routing & Zero-Downtime Failover
+Deploy backend applications across multiple geographical datacenters. ShieldDOS dynamically proxies traffic to the nearest latency-optimized origin server. If an origin server goes offline, the dedicated `UptimeService` autonomously strips the failing shard from the Layer 7 routing pool, enabling absolute structural High-Availability without dropping user connections.
 
-### 2. 🦾 Heuristic AI Anomaly Detection (WAF 2.0)
-Traditional regex WAFs are easily bypassed by Base64 encoding and obfuscated payloads. ShieldDOS implements a mathematical **Shannon Entropy Calculation Engine** natively within the HTTP pipeline. If a URI query or body payload exceeds predefined cryptographic randomness thresholds, the attack is dropped *before* evaluation.
+### 2. 🦾 Autonomous Traffic Shaping (Auto-WAF ML)
+Traditional WAFs rely entirely on archaic Regular Expressions. ShieldDOS monitors underlying HTTP error velocities (404, 502, 429) inside a Redis sliding window. If statistical thresholds fracture, the proxy autonomously modifies the Postgres cluster to engage **Under Attack Mode**, instantaneously shutting down L7 amplification attacks dynamically without manual intervention.
 
-### 3. 🕸️ Redis Global Synchronization Mesh
+### 3. 🛡️ Deep GraphQL / JSON AST Inspection
+Prevent asymmetric payload exhaustion before it happens. ShieldDOS runs a highly-optimized O(N) Streaming Bracket Parser directly within the Node HTTP pipeline. When a visitor sends a POST payload, the proxy calculates the Abstract Syntax Tree depth mid-stream. Recursive query attacks are detonated instantly, shielding backend CPU cycles without buffering massive 15MB files into RAM.
+
+### 4. 🕸️ Redis Global Synchronization Mesh
 When a severe DDoS attack or SQL injection attempt is detected on a single proxy node, ShieldDOS instantly isolates the attacker's IP and publishes it to the `shield:ban` Pub/Sub channel. Every Edge node globally subscribes to this lattice, instantly blocking the IP across your entire infrastructure within millisecond latency windows.
 
-### 4. 🔐 Cloudflare Turnstile Edge Integration
-Activate **Under Attack Mode** to intercept all Layer 7 traffic and present an invisible, privacy-first Cloudflare Turnstile cryptographic challenge. ShieldDOS verifies the cryptogram with Cloudflare APIs completely autonomously and issues an HMAC-signed `shield_dos_clearance` HTTP Cookie, providing seamless browsing for legitimate users while starving automated botnets of CPU capacity.
+### 5. 🚦 Distributed Virtual Waiting Rooms
+Heavy traffic bursting past absolute database limits is safely sequestered natively at the Edge. The Proxy utilizes `ZSET` mechanisms inside Redis to enqueue massive traffic spikes into an auto-refreshing HTML interstitial page. Users are evaluated via cryptographic verification cookies before gaining backend clearances, decoupling load balancer exhaustion from DB collapse.
 
-### 5. 🌐 WebGL 3D Live Traffic Globe
-Observability is a feature. Stop reading archaic Nginx terminal logs. The Vue 3 Control Dashboard leverages hardware-accelerated **WebGL & three.js** alongside WebSockets to render a rotating, interactive 3D Earth. Watch in real-time as animated, color-coded arcs shoot across the globe, geographically visualizing the attacker's origin and the target datacenter being assaulted.
+### 6. 🌐 Zero-Touch Auto SSL (SNI) & WebGL Dashboard
+The Edge Node HTTP Server has been structurally engineered with an SNI Callback hook! TLS cert requests are dynamically pulled directly from the Postgres Control Plane or Redis Cache. No Nginx reloads required. Observe everything in real-time through the Vue 3 WebGL globe, watching live laser arcs map DDoS strikes across the physical planet.
 
 ---
 

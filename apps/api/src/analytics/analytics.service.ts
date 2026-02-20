@@ -63,4 +63,54 @@ export class AnalyticsService {
             `, [user.userId]);
         }
     }
+
+    // Phase 8: SIEM Aggregation Endpoints
+    async getAdvancedLogs(user: any, query: any): Promise<any[]> {
+        const { limit = 50, offset = 0, ipAddress, country, type } = query;
+        let qb = this.analyticsRepository.createQueryBuilder('a')
+            .leftJoin('site', 's', 'CAST(s.id AS VARCHAR) = a."siteId"')
+            .select(['a.*', 's.domain as domain']);
+
+        if (user.role !== 'admin') {
+            qb = qb.where('a."userId" = :userId', { userId: user.userId });
+        } else {
+            qb = qb.where('1=1');
+        }
+
+        if (ipAddress) qb = qb.andWhere('a."ipAddress" = :ipAddress', { ipAddress });
+        if (country) qb = qb.andWhere('a.country = :country', { country });
+        if (type === 'WAF') qb = qb.andWhere('a.blocked = true AND a.statusCode = 403');
+        if (type === 'RATE_LIMIT') qb = qb.andWhere('a.blocked = true AND a.statusCode = 429');
+
+        qb = qb.orderBy('a.timestamp', 'DESC').limit(limit).offset(offset);
+        return qb.getRawMany();
+    }
+
+    async getCountryAggregation(user: any): Promise<any[]> {
+        let qb = this.analyticsRepository.createQueryBuilder('a')
+            .select('a.country', 'country')
+            .addSelect('COUNT(*)', 'count')
+            .where('a.blocked = true');
+
+        if (user.role !== 'admin') {
+            qb = qb.andWhere('a."userId" = :userId', { userId: user.userId });
+        }
+
+        qb = qb.groupBy('a.country').orderBy('count', 'DESC').limit(50);
+        return qb.getRawMany();
+    }
+
+    async getTopIPs(user: any): Promise<any[]> {
+        let qb = this.analyticsRepository.createQueryBuilder('a')
+            .select('a."ipAddress"', 'ipAddress')
+            .addSelect('COUNT(*)', 'count')
+            .where('a.blocked = true');
+
+        if (user.role !== 'admin') {
+            qb = qb.andWhere('a."userId" = :userId', { userId: user.userId });
+        }
+
+        qb = qb.groupBy('a."ipAddress"').orderBy('count', 'DESC').limit(10);
+        return qb.getRawMany();
+    }
 }

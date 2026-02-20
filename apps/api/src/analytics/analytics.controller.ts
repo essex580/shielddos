@@ -35,4 +35,24 @@ export class AnalyticsController {
     getAllStats(@Request() req: any): Promise<Analytics[]> {
         return this.analyticsService.getAllStats(req.user);
     }
+
+    // Phase 8: SIEM Aggregation Endpoints
+    @Get('logs/advanced')
+    @UseGuards(AuthGuard('jwt'))
+    getAdvancedLogs(@Request() req: any, @Body() body: any): Promise<any[]> {
+        // GET requests usually take params from query string, but we can accept query params via req.query
+        return this.analyticsService.getAdvancedLogs(req.user, req.query);
+    }
+
+    @Get('aggregation/countries')
+    @UseGuards(AuthGuard('jwt'))
+    getCountryAggregation(@Request() req: any): Promise<any[]> {
+        return this.analyticsService.getCountryAggregation(req.user);
+    }
+
+    @Get('aggregation/top-ips')
+    @UseGuards(AuthGuard('jwt'))
+    getTopIPs(@Request() req: any): Promise<any[]> {
+        return this.analyticsService.getTopIPs(req.user);
+    }
 }

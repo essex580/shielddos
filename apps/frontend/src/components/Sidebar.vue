@@ -25,6 +25,14 @@
         <Globe class="w-4 h-4" />
         <span class="font-medium">/sites</span>
       </a>
+
+      <a href="#" @click="$emit('page', 'logs')" 
+         :class="currentPage === 'logs' ? 'bg-white text-black' : 'hover:bg-zinc-900 hover:text-white'"
+         class="flex items-center space-x-3 px-4 py-3 transition-none border-l-2"
+         :style="currentPage === 'logs' ? 'border-color: #fff' : 'border-color: transparent'">
+        <ShieldAlert class="w-4 h-4" />
+        <span class="font-medium">/threat_logs</span>
+      </a>
       
       <div class="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-6 mb-2 px-4">Config</div>
 
@@ -57,7 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ShieldCheck, LayoutDashboard, Globe, Settings, User, LogOut } from 'lucide-vue-next';
+import { ShieldCheck, LayoutDashboard, Globe, Settings, User, LogOut, ShieldAlert } from 'lucide-vue-next';
 
 defineProps<{
   currentPage: string

@@ -12,6 +12,7 @@ import { EventsModule } from './events/events.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UptimeModule } from './uptime/uptime.module';
 import { Uptime } from './uptime/uptime.entity';
+import { AiModule } from './ai/ai.module';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { Uptime } from './uptime/uptime.entity';
         UsersModule,
         EventsModule,
         UptimeModule,
+        AiModule,
     ],
     controllers: [],
     providers: [],

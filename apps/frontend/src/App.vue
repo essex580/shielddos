@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Dashboard from './views/Dashboard.vue'
 import Sites from './views/Sites.vue'
+import ThreatLogs from './views/ThreatLogs.vue'
 import Login from './views/Login.vue'
 
 const currentPage = ref('dashboard')
@@ -26,6 +27,7 @@ const currentView = computed(() => {
   switch (currentPage.value) {
     case 'dashboard': return Dashboard
     case 'sites': return Sites
+    case 'logs': return ThreatLogs
     default: return Dashboard
   }
 })
