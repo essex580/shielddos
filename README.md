@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Shield.png" alt="Shield" width="100" />
   
-  # 🛡️ ShieldDOS
+  #  ShieldDOS
   
   **An Enterprise-Grade Edge Proxy & DDoS Protection Network**
 
