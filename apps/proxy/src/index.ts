@@ -138,8 +138,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
                     country
                 }).catch(err => console.error('API Log Error:', err.message));
 
-                res.writeHead(429);
-                res.end('ShieldDOS: Too Many Requests (Rate Limited)');
+                res.writeHead(429, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
+                res.end(site.customErrorPage403 || 'ShieldDOS: Too Many Requests (Rate Limited)');
                 return;
             }
         } catch (redisError) {
@@ -153,8 +153,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         if (site.botProtection) {
             if (isBot(req)) {
                 console.log(`[BotFilter] Blocked ${ip} targetting ${host}`);
-                res.writeHead(403);
-                res.end('ShieldDOS: Bot Detected');
+                res.writeHead(403, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
+                res.end(site.customErrorPage403 || 'ShieldDOS: Bot Detected');
 
                 // Log exclusion
                 axios.post(`${API_URL}/analytics`, {
@@ -177,8 +177,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         if (site.wafEnabled) {
             if (isWafAttack(req)) {
                 console.log(`[WAF] Blocked attack from ${ip} targeting ${host}${req.url}`);
-                res.writeHead(403);
-                res.end('ShieldDOS: WAF Blocked Request (Malicious Pattern Detected)');
+                res.writeHead(403, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
+                res.end(site.customErrorPage403 || 'ShieldDOS: WAF Blocked Request (Malicious Pattern Detected)');
 
                 axios.post(`${API_URL}/analytics`, {
                     siteId: site.id,
@@ -289,8 +289,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         }).catch(err => console.error('API Log Error:', err.message));
 
         if (blocked) {
-            res.writeHead(403);
-            res.end(`ShieldDOS: Access Denied (${blockReason})`);
+            res.writeHead(403, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
+            res.end(site.customErrorPage403 || `ShieldDOS: Access Denied (${blockReason})`);
             return;
         }
 
@@ -315,8 +315,8 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         }, (err) => {
             console.error('[Proxy Error] Upstream failed:', err);
             if (!res.headersSent) {
-                res.writeHead(502);
-                res.end('Bad Gateway: Upstream Unreachable');
+                res.writeHead(502, { 'Content-Type': site.customErrorPage502 ? 'text/html' : 'text/plain' });
+                res.end(site.customErrorPage502 || 'Bad Gateway: Upstream Unreachable');
             }
         });
 

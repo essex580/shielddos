@@ -37,4 +37,9 @@ export class SitesController {
     verify(@Request() req: any, @Param('id') id: string): Promise<{ resolvedIp: string; isConfigured: boolean }> {
         return this.sitesService.verify(id, req.user);
     }
+
+    @Post(':id/purge-cache')
+    purgeCache(@Request() req: any, @Param('id') id: string): Promise<{ success: boolean; cleared: number }> {
+        return this.sitesService.purgeCache(id, req.user);
+    }
 }

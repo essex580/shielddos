@@ -5,15 +5,20 @@ import { Site } from './site.entity';
 import * as dns from 'dns';
 import { promisify } from 'util';
 import axios from 'axios';
+import Redis from 'ioredis';
 
 const resolve4 = promisify(dns.resolve4);
 
 @Injectable()
 export class SitesService {
+    private redisClient: Redis;
+
     constructor(
         @InjectRepository(Site)
         private sitesRepository: Repository<Site>,
-    ) { }
+    ) {
+        this.redisClient = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    }
 
     findAll(user: any): Promise<Site[]> {
         if (user.role === 'admin') return this.sitesRepository.find();
@@ -74,5 +79,18 @@ export class SitesService {
                 isConfigured: false
             };
         }
+    }
+
+    async purgeCache(id: string, user: any): Promise<{ success: boolean; cleared: number }> {
+        const site = await this.findOne(id, user);
+        if (!site) throw new Error('Site not found or access denied');
+
+        // Find all keys starting with cache:domain
+        const keys = await this.redisClient.keys(`cache:${site.domain}*`);
+        if (keys.length > 0) {
+            await this.redisClient.del(...keys);
+            return { success: true, cleared: keys.length };
+        }
+        return { success: true, cleared: 0 };
     }
 }

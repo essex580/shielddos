@@ -67,6 +67,9 @@
                 <button @click="openSettings(site)" class="border border-zinc-700 rounded-md hover:bg-zinc-800 text-zinc-300 px-2 py-1 text-xs font-semibold transition-colors" title="Settings">
                   <Settings class="w-3 h-3" />
                 </button>
+                <button @click="purgeCache(site)" class="border border-zinc-700 bg-blue-900/30 text-blue-400 rounded-md hover:bg-blue-900/50 px-2 py-1 text-xs font-semibold transition-colors" title="Purge Edge Cache">
+                  Purge Cache
+                </button>
                 <button @click="openRules(site)" class="border border-zinc-700 rounded-md hover:bg-zinc-800 text-zinc-300 px-2 py-1 text-xs font-semibold transition-colors">
                   Rules
                 </button>
@@ -138,6 +141,20 @@
               @change="updateRateLimit"
               class="w-20 bg-zinc-950 border border-zinc-700 p-1.5 text-white text-xs rounded-md focus:outline-none focus:border-zinc-500 text-center">
         </div>
+
+        <div class="pt-4 border-t border-zinc-800 space-y-4">
+            <h3 class="text-xs font-bold text-white uppercase tracking-widest">Custom error pages (HTML)</h3>
+            
+            <div>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">403 Access Denied (WAF/Bots)</label>
+                <textarea v-model="selectedSite.customErrorPage403" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Access Denied by WAF</h1></body></html>"></textarea>
+            </div>
+            
+            <div>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">502 Bad Gateway (Upstream Down)</label>
+                <textarea v-model="selectedSite.customErrorPage502" @change="updateCustomPages" class="w-full bg-zinc-950 border border-zinc-700 p-2 text-zinc-300 text-xs rounded-md focus:border-zinc-500 h-20 placeholder-zinc-700" placeholder="<html><body><h1>Origin Server Offline</h1></body></html>"></textarea>
+            </div>
+        </div>
       </div>
       <template #footer>
         <button @click="showEditModal = false" class="terminal-button-outline">Done</button>
@@ -188,6 +205,9 @@ interface Site {
   botProtection: boolean;
   wafEnabled: boolean;
   rateLimit: number;
+  customErrorPage403?: string;
+  customErrorPage404?: string;
+  customErrorPage502?: string;
   verificationStatus?: {
     resolvedIp: string;
     isConfigured: boolean;
@@ -307,6 +327,33 @@ const updateRateLimit = async () => {
         if (s) s.rateLimit = selectedSite.value.rateLimit;
     } catch (e) {
         console.error("Failed to update rate limit", e);
+    }
+}
+
+const updateCustomPages = async () => {
+    if (!selectedSite.value) return;
+    try {
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, {
+            customErrorPage403: selectedSite.value.customErrorPage403,
+            customErrorPage502: selectedSite.value.customErrorPage502
+        });
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) {
+            s.customErrorPage403 = selectedSite.value.customErrorPage403;
+            s.customErrorPage502 = selectedSite.value.customErrorPage502;
+        }
+    } catch (e) {
+        console.error("Failed to update custom pages", e);
+    }
+}
+
+const purgeCache = async (site: Site) => {
+    try {
+        const res = await axios.post(`${API_URL}/sites/${site.id}/purge-cache`);
+        alert(`Purged ${res.data.cleared} cached items for ${site.domain} at the Edge.`);
+    } catch (e) {
+        console.error("Failed to purge cache", e);
+        alert('Failed to purge cache.');
     }
 }
 

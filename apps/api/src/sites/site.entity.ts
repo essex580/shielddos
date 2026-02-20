@@ -28,6 +28,15 @@ export class Site {
     @Column({ type: 'int', default: 200 })
     rateLimit: number; // requests per minute
 
+    @Column({ type: 'text', nullable: true })
+    customErrorPage403: string;
+
+    @Column({ type: 'text', nullable: true })
+    customErrorPage404: string;
+
+    @Column({ type: 'text', nullable: true })
+    customErrorPage502: string;
+
     @OneToMany(() => FirewallRule, (rule) => rule.site)
     firewallRules: FirewallRule[];
 
