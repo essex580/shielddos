@@ -43,8 +43,8 @@
             <User class="w-4 h-4 text-zinc-500" />
         </div>
         <div class="flex flex-col">
-          <span class="text-xs font-bold text-white uppercase">Administrator</span>
-          <span class="text-[10px] text-zinc-600">Admin</span>
+          <span class="text-xs font-bold text-white">{{ role }}</span>
+          <span class="text-[10px] text-zinc-500 font-semibold">{{ username }}</span>
         </div>
       </div>
       <button @click="$emit('page', 'logout')" class="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800 rounded-md transition-colors text-xs font-medium tracking-wider">
@@ -56,9 +56,26 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { ShieldCheck, LayoutDashboard, Globe, Settings, User, LogOut } from 'lucide-vue-next';
 
 defineProps<{
   currentPage: string
 }>()
+
+const username = ref('User');
+const role = ref('Client');
+
+onMounted(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            username.value = payload.username || 'Unknown';
+            role.value = payload.role === 'admin' ? 'SYSTEM ADMINISTRATOR' : 'TENANT ACCOUNT';
+        } catch (e) {
+            // parse error
+        }
+    }
+});
 </script>

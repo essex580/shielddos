@@ -15,31 +15,37 @@ export class SitesService {
         private sitesRepository: Repository<Site>,
     ) { }
 
-    findAll(): Promise<Site[]> {
-        return this.sitesRepository.find();
+    findAll(user: any): Promise<Site[]> {
+        if (user.role === 'admin') return this.sitesRepository.find();
+        return this.sitesRepository.find({ where: { user: { id: user.userId } } });
     }
 
-    findOne(id: string): Promise<Site | null> {
-        return this.sitesRepository.findOneBy({ id });
+    findOne(id: string, user: any): Promise<Site | null> {
+        if (user.role === 'admin') return this.sitesRepository.findOneBy({ id });
+        return this.sitesRepository.findOne({ where: { id, user: { id: user.userId } } });
     }
 
-    create(site: Partial<Site>): Promise<Site> {
+    create(user: any, site: Partial<Site>): Promise<Site> {
         const newSite = this.sitesRepository.create(site);
+        newSite.user = { id: user.userId } as any;
         return this.sitesRepository.save(newSite);
     }
 
-    async remove(id: string): Promise<void> {
-        await this.sitesRepository.delete(id);
+    async remove(id: string, user: any): Promise<void> {
+        const site = await this.findOne(id, user);
+        if (site) await this.sitesRepository.delete(id);
     }
 
-    async update(id: string, site: Partial<Site>): Promise<Site> {
-        await this.sitesRepository.update(id, site);
-        return this.findOne(id) as Promise<Site>;
+    async update(id: string, siteUpdate: Partial<Site>, user: any): Promise<Site> {
+        const site = await this.findOne(id, user);
+        if (!site) throw new Error('Site not found or access denied');
+        await this.sitesRepository.update(id, siteUpdate);
+        return this.findOne(id, user) as Promise<Site>;
     }
 
-    async verify(id: string): Promise<{ resolvedIp: string; isConfigured: boolean }> {
-        const site = await this.findOne(id);
-        if (!site) throw new Error('Site not found');
+    async verify(id: string, user: any): Promise<{ resolvedIp: string; isConfigured: boolean }> {
+        const site = await this.findOne(id, user);
+        if (!site) throw new Error('Site not found or access denied');
 
         try {
             const ips = await resolve4(site.domain);

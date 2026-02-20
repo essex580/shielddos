@@ -1,5 +1,8 @@
 
 import * as http from 'http';
+import * as https from 'https';
+import * as fs from 'fs';
+import * as path from 'path';
 import httpProxy from 'http-proxy';
 import { Client } from 'pg';
 import axios from 'axios';
@@ -8,7 +11,26 @@ import geoip from 'geoip-lite';
 
 const proxy = httpProxy.createProxyServer({});
 const PORT = process.env.PORT || 8080;
+const HTTPS_PORT = process.env.HTTPS_PORT || 443;
 const API_URL = process.env.API_URL || 'http://localhost:3000';
+
+// SSL Configuration
+let sslOptions: https.ServerOptions = {};
+try {
+    const keyPath = path.join(__dirname, '../../../certs/server.key');
+    const certPath = path.join(__dirname, '../../../certs/server.cert');
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        sslOptions = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath)
+        };
+        console.log('[SSL] Loaded local certificates successfully.');
+    } else {
+        console.warn('[SSL] Certificates not found. HTTPS server will fail if started without them.');
+    }
+} catch (e) {
+    console.error('[SSL] Error loading certs:', e);
+}
 
 // Redis Client
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
@@ -24,12 +46,16 @@ import { isBot } from './middleware/bot-filter.middleware';
 import { handleChallenge } from './middleware/challenge.middleware';
 import { isWafAttack } from './middleware/waf.middleware';
 import { serveCachedResponse, interceptAndCacheResponse } from './middleware/cache.middleware';
+import { isBlacklistedIp } from './middleware/reputation.middleware';
 
 // Hard limits for DDoS mitigation
 const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
 const REQUEST_TIMEOUT = 30000; // 30 seconds (Slowloris protection)
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer(appHandler);
+const httpsServer = https.createServer(sslOptions, appHandler);
+
+async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
     // 1. Slowloris Mitigation (Drop slow connections)
     res.setTimeout(REQUEST_TIMEOUT, () => {
         console.log(`[Timeout] Connection dropped against Slowloris attack: ${req.socket.remoteAddress}`);
@@ -63,6 +89,15 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // Layer 0.1: Global IP Reputation Blacklist
+    if (isBlacklistedIp(req)) {
+        console.log(`[Global Blacklist] Dropped connection from known malicious actor: ${ip}`);
+        res.writeHead(403);
+        res.end('ShieldDOS: Access Denied (Global Threat Intelligence Match)');
+        req.socket.destroy(); // Hard kill against known bad actors
+        return;
+    }
+
     try {
         // Global rate limiting logic moved below site loading to allow per-site config
 
@@ -93,6 +128,7 @@ const server = http.createServer(async (req, res) => {
                 // Async log rate limit block
                 axios.post(`${API_URL}/analytics`, {
                     siteId: site.id,
+                    userId: site.userId,
                     path: req.url,
                     method: req.method,
                     ipAddress: ip,
@@ -123,6 +159,7 @@ const server = http.createServer(async (req, res) => {
                 // Log exclusion
                 axios.post(`${API_URL}/analytics`, {
                     siteId: site.id,
+                    userId: site.userId,
                     path: req.url,
                     method: req.method,
                     ipAddress: ip,
@@ -145,6 +182,7 @@ const server = http.createServer(async (req, res) => {
 
                 axios.post(`${API_URL}/analytics`, {
                     siteId: site.id,
+                    userId: site.userId,
                     path: req.url,
                     method: req.method,
                     ipAddress: ip,
@@ -202,12 +240,45 @@ const server = http.createServer(async (req, res) => {
                 // Explicit allow overrides other potential blocks
                 break;
             }
+            if (rule.type === 'CUSTOM_RULE') {
+                try {
+                    const custom = JSON.parse(rule.value);
+                    let targetValue = '';
+                    if (custom.field === 'path') targetValue = req.url || '';
+                    else if (custom.field === 'header') targetValue = req.headers[custom.headerName?.toLowerCase()] as string || '';
+                    else if (custom.field === 'query') {
+                        const q = req.url?.split('?')[1] || '';
+                        const searchParams = new URLSearchParams(q);
+                        targetValue = searchParams.get(custom.queryName) || '';
+                    }
+
+                    let isMatch = false;
+                    if (custom.operator === 'contains') isMatch = targetValue.includes(custom.match);
+                    if (custom.operator === 'equals') isMatch = targetValue === custom.match;
+                    if (custom.operator === 'starts_with') isMatch = targetValue.startsWith(custom.match);
+
+                    if (isMatch) {
+                        client.query('UPDATE firewall_rule SET hits = hits + 1 WHERE id = $1', [rule.id]).catch(console.error);
+                        if (custom.action === 'BLOCK') {
+                            blocked = true;
+                            blockReason = `Advanced Rule Blocked (${custom.field} ${custom.operator})`;
+                            break;
+                        } else if (custom.action === 'CHALLENGE') {
+                            const handled = handleChallenge(req, res);
+                            if (handled) return; // Intercepted by challenge page
+                        }
+                    }
+                } catch (e) {
+                    console.error('Custom Rule Parse Error:', e);
+                }
+            }
         }
 
         // 4. Log Request (Async via API)
         // Only log if not already logged by middleware (e.g. bot block)
         axios.post(`${API_URL}/analytics`, {
             siteId: site.id,
+            userId: site.userId,
             path: req.url,
             method: req.method,
             ipAddress: ip,
@@ -251,11 +322,17 @@ const server = http.createServer(async (req, res) => {
 
     } catch (error) {
         console.error('Request Handler Error:', error);
-        res.writeHead(500);
-        res.end('Internal Server Error');
+        if (!res.headersSent) {
+            res.writeHead(500);
+            res.end('Internal Server Error');
+        }
     }
-});
+}
 
 server.listen(PORT, () => {
-    console.log(`ShieldDOS Proxy checking DB and listening on port ${PORT}`);
+    console.log(`[HTTP] ShieldDOS Proxy checking DB and listening on port ${PORT}`);
+});
+
+httpsServer.listen(HTTPS_PORT, () => {
+    console.log(`[HTTPS] ShieldDOS Edge TLS Terminated on port ${HTTPS_PORT}`);
 });

@@ -1,5 +1,6 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne } from 'typeorm';
 import { FirewallRule } from './firewall-rule.entity';
+import { User } from '../users/user.entity';
 
 @Entity()
 export class Site {
@@ -29,6 +30,9 @@ export class Site {
 
     @OneToMany(() => FirewallRule, (rule) => rule.site)
     firewallRules: FirewallRule[];
+
+    @ManyToOne(() => User, (user) => user.sites, { onDelete: 'CASCADE' })
+    user: User;
 
     @CreateDateColumn()
     createdAt: Date;

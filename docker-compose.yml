@@ -51,13 +51,16 @@ services:
       API_URL: http://api:3000
       REDIS_URL: redis://redis:6379
       PORT: 8080
+      HTTPS_PORT: 443
     ports:
       - "8080:8080"
+      - "443:443"
     depends_on:
       - api
       - redis
     volumes:
       - ./apps/proxy/src:/app/apps/proxy/src
+      - ./certs:/app/certs
 
   dashboard:
     build:

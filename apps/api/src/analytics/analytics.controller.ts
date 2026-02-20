@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { Analytics } from './analytics.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,19 +20,19 @@ export class AnalyticsController {
 
     @Get('chart')
     @UseGuards(AuthGuard('jwt'))
-    getTrafficChart(): Promise<any[]> {
-        return this.analyticsService.getTrafficChartData();
+    getTrafficChart(@Request() req: any): Promise<any[]> {
+        return this.analyticsService.getTrafficChartData(req.user);
     }
 
     @Get(':siteId')
     @UseGuards(AuthGuard('jwt'))
-    getStats(@Param('siteId') siteId: string): Promise<Analytics[]> {
-        return this.analyticsService.getStats(siteId);
+    getStats(@Request() req: any, @Param('siteId') siteId: string): Promise<Analytics[]> {
+        return this.analyticsService.getStats(siteId, req.user);
     }
 
     @Get()
     @UseGuards(AuthGuard('jwt'))
-    getAllStats(): Promise<Analytics[]> {
-        return this.analyticsService.getAllStats();
+    getAllStats(@Request() req: any): Promise<Analytics[]> {
+        return this.analyticsService.getAllStats(req.user);
     }
 }

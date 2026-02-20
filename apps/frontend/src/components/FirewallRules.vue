@@ -19,13 +19,42 @@
                           <option value="RATE_LIMIT">Rate Limit</option>
                           <option value="ALLOW_IP">Allow IP</option>
                           <option value="CHALLENGE">JS Challenge</option>
+                          <option value="CUSTOM_RULE">Advanced Custom Rule</option>
                       </select>
                   </div>
                   <div class="md:col-span-7">
-                      <input v-model="newRule.value" type="text" :placeholder="newRule.type === 'BLOCK_COUNTRY' ? 'Country Code (e.g. RO)' : 'Value (e.g. 1.2.3.4)'" class="terminal-input w-full p-2 text-xs">
+                      <input v-if="newRule.type !== 'CUSTOM_RULE'" v-model="newRule.value" type="text" :placeholder="newRule.type === 'BLOCK_COUNTRY' ? 'Country Code (e.g. RO)' : 'Value (e.g. 1.2.3.4)'" class="terminal-input w-full p-2 text-xs">
+                      
+                      <div v-else class="flex flex-col gap-2">
+                          <div class="flex gap-2">
+                              <select v-model="customRule.action" class="bg-zinc-950 border border-zinc-700 p-2 text-white text-xs rounded-md">
+                                  <option value="BLOCK">Block</option>
+                                  <option value="CHALLENGE">Challenge</option>
+                              </select>
+                              <select v-model="customRule.field" class="bg-zinc-950 border border-zinc-700 p-2 text-white text-xs rounded-md flex-1">
+                                  <option value="path">URI Path</option>
+                                  <option value="header">HTTP Header</option>
+                                  <option value="query">Query Parameter</option>
+                              </select>
+                          </div>
+                           <div class="flex gap-2" v-if="customRule.field === 'header'">
+                              <input v-model="customRule.headerName" type="text" placeholder="Header Name (e.g. User-Agent)" class="terminal-input w-full p-2 text-xs">
+                          </div>
+                          <div class="flex gap-2" v-if="customRule.field === 'query'">
+                              <input v-model="customRule.queryName" type="text" placeholder="Query Name (e.g. id)" class="terminal-input w-full p-2 text-xs">
+                          </div>
+                          <div class="flex gap-2">
+                              <select v-model="customRule.operator" class="bg-zinc-950 border border-zinc-700 p-2 text-white text-xs rounded-md">
+                                  <option value="contains">Contains</option>
+                                  <option value="equals">Equals</option>
+                                  <option value="starts_with">Starts With</option>
+                              </select>
+                              <input v-model="customRule.match" type="text" placeholder="Match string..." class="terminal-input w-full p-2 text-xs flex-1">
+                          </div>
+                      </div>
                   </div>
                   <div class="md:col-span-2">
-                      <button @click="addRule" :disabled="loading || !newRule.value" class="w-full h-full bg-white hover:bg-zinc-200 text-black text-xs font-semibold rounded-md transition-colors disabled:opacity-50">
+                      <button @click="addRule" :disabled="loading || (!newRule.value && newRule.type !== 'CUSTOM_RULE') || (newRule.type === 'CUSTOM_RULE' && !customRule.match)" class="w-full h-full bg-white hover:bg-zinc-200 text-black text-xs font-semibold rounded-md transition-colors disabled:opacity-50 min-h-[38px]">
                           Add
                       </button>
                   </div>
@@ -48,17 +77,17 @@
                 <div v-for="rule in rules" :key="rule.id" class="flex items-center justify-between p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:border-zinc-600 transition-colors group">
                     <div class="flex items-center gap-3">
                         <div :class="{
-                            'text-red-500': rule.type.includes('BLOCK'),
+                            'text-red-500': rule.type.includes('BLOCK') || (rule.type === 'CUSTOM_RULE' && rule.value.includes('BLOCK')),
                             'text-green-500': rule.type.includes('ALLOW'),
-                            'text-yellow-500': rule.type === 'CHALLENGE' || rule.type === 'RATE_LIMIT'
+                            'text-yellow-500': rule.type === 'CHALLENGE' || rule.type === 'RATE_LIMIT' || (rule.type === 'CUSTOM_RULE' && rule.value.includes('CHALLENGE'))
                         }">
-                            <ShieldAlert v-if="rule.type.includes('BLOCK')" class="w-3 h-3" />
+                            <ShieldAlert v-if="rule.type.includes('BLOCK') || (rule.type === 'CUSTOM_RULE' && rule.value.includes('BLOCK'))" class="w-3 h-3" />
                             <CheckCircle v-else-if="rule.type.includes('ALLOW')" class="w-3 h-3" />
                             <AlertTriangle v-else class="w-3 h-3" />
                         </div>
-                        <div>
-                            <p class="text-sm font-semibold text-white capitalize">
-                                {{ formatType(rule.type) }} <span class="font-mono text-zinc-400 normal-case">: {{ rule.value }}</span>
+                        <div class="flex-1 overflow-hidden">
+                            <p class="text-sm font-semibold text-white capitalize break-all">
+                                {{ formatType(rule.type) }} <span class="font-mono text-zinc-400 normal-case">: {{ formatRuleValue(rule.type, rule.value) }}</span>
                             </p>
                             <p class="text-xs text-zinc-500">
                                 {{ rule.hits }} hits &bull; {{ new Date(rule.createdAt).toLocaleDateString() }}
@@ -92,6 +121,15 @@ const rules = ref<any[]>([]);
 const loading = ref(true);
 const newRule = ref({ type: 'BLOCK_IP', value: '' });
 
+const customRule = ref({
+    action: 'BLOCK',
+    field: 'path',
+    headerName: '',
+    queryName: '',
+    operator: 'contains',
+    match: ''
+});
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const fetchRules = async () => {
@@ -107,11 +145,18 @@ const fetchRules = async () => {
 }
 
 const addRule = async () => {
-    if (!newRule.value.value) return;
+    if (newRule.value.type === 'CUSTOM_RULE') {
+        if (!customRule.value.match) return;
+        newRule.value.value = JSON.stringify(customRule.value);
+    } else {
+        if (!newRule.value.value) return;
+    }
+
     loading.value = true;
     try {
         await axios.post(`${API_URL}/sites/${props.siteId}/rules`, newRule.value);
         newRule.value.value = ''; // Reset
+        customRule.value.match = ''; // Reset custom
         await fetchRules();
     } catch (e) {
         console.error(e);
@@ -130,7 +175,20 @@ const deleteRule = async (id: string) => {
 }
 
 const formatType = (type: string) => {
+    if (type === 'CUSTOM_RULE') return 'Advanced Rule';
     return type.replace(/_/g, ' ');
+}
+
+const formatRuleValue = (type: string, value: string) => {
+    if (type === 'CUSTOM_RULE') {
+        try {
+            const parsed = JSON.parse(value);
+            return `[${parsed.action}] If ${parsed.field}${parsed.headerName ? `(${parsed.headerName})` : ''}${parsed.queryName ? `(${parsed.queryName})` : ''} ${parsed.operator} "${parsed.match}"`;
+        } catch {
+            return value;
+        }
+    }
+    return value;
 }
 
 onMounted(() => {

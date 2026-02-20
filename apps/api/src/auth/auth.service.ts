@@ -21,6 +21,7 @@ export class AuthService {
             this.logger.log('No users found. Seeding default admin user...');
             const admin = new User();
             admin.username = 'admin';
+            admin.role = 'admin';
             // Hash "admin" password
             admin.password = await bcrypt.hash('admin', 10);
             await this.usersService.create(admin);
@@ -38,12 +39,13 @@ export class AuthService {
     }
 
     async login(user: any) {
-        const payload = { username: user.username, sub: user.id };
+        const payload = { username: user.username, sub: user.id, role: user.role };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
                 username: user.username,
-                id: user.id
+                id: user.id,
+                role: user.role
             }
         };
     }

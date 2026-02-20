@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Patch, Request } from '@nestjs/common';
 import { SitesService } from './sites.service';
 import { Site } from './site.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,32 +9,32 @@ export class SitesController {
     constructor(private readonly sitesService: SitesService) { }
 
     @Get()
-    findAll(): Promise<Site[]> {
-        return this.sitesService.findAll();
+    findAll(@Request() req: any): Promise<Site[]> {
+        return this.sitesService.findAll(req.user);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string): Promise<Site | null> {
-        return this.sitesService.findOne(id);
+    findOne(@Request() req: any, @Param('id') id: string): Promise<Site | null> {
+        return this.sitesService.findOne(id, req.user);
     }
 
     @Post()
-    create(@Body() site: Partial<Site>): Promise<Site> {
-        return this.sitesService.create(site);
+    create(@Request() req: any, @Body() site: Partial<Site>): Promise<Site> {
+        return this.sitesService.create(req.user, site);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string): Promise<void> {
-        return this.sitesService.remove(id);
+    remove(@Request() req: any, @Param('id') id: string): Promise<void> {
+        return this.sitesService.remove(id, req.user);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() site: Partial<Site>): Promise<Site> {
-        return this.sitesService.update(id, site);
+    update(@Request() req: any, @Param('id') id: string, @Body() site: Partial<Site>): Promise<Site> {
+        return this.sitesService.update(id, site, req.user);
     }
 
     @Post(':id/verify')
-    verify(@Param('id') id: string): Promise<{ resolvedIp: string; isConfigured: boolean }> {
-        return this.sitesService.verify(id);
+    verify(@Request() req: any, @Param('id') id: string): Promise<{ resolvedIp: string; isConfigured: boolean }> {
+        return this.sitesService.verify(id, req.user);
     }
 }

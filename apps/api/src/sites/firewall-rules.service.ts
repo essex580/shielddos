@@ -14,9 +14,12 @@ export class FirewallRulesService {
         private sitesRepository: Repository<Site>,
     ) { }
 
-    async create(siteId: string, ruleData: Partial<FirewallRule>): Promise<FirewallRule> {
-        const site = await this.sitesRepository.findOneBy({ id: siteId });
-        if (!site) throw new NotFoundException('Site not found');
+    async create(siteId: string, ruleData: Partial<FirewallRule>, user: any): Promise<FirewallRule> {
+        let siteQuery: any = { id: siteId };
+        if (user.role !== 'admin') siteQuery = { id: siteId, user: { id: user.userId } };
+
+        const site = await this.sitesRepository.findOne({ where: siteQuery });
+        if (!site) throw new NotFoundException('Site not found or access denied');
 
         const rule = this.rulesRepository.create({
             ...ruleData,
@@ -26,14 +29,26 @@ export class FirewallRulesService {
         return this.rulesRepository.save(rule);
     }
 
-    async findAll(siteId: string): Promise<FirewallRule[]> {
+    async findAll(siteId: string, user: any): Promise<FirewallRule[]> {
+        let siteQuery: any = { id: siteId };
+        if (user.role !== 'admin') siteQuery = { id: siteId, user: { id: user.userId } };
+        const site = await this.sitesRepository.findOne({ where: siteQuery });
+        if (!site) throw new NotFoundException('Site not found or access denied');
+
         return this.rulesRepository.find({
             where: { site: { id: siteId } },
             order: { createdAt: 'DESC' }
         });
     }
 
-    async remove(id: string): Promise<void> {
+    async remove(id: string, user: any): Promise<void> {
+        const rule = await this.rulesRepository.findOne({ where: { id }, relations: ['site', 'site.user'] });
+        if (!rule) throw new NotFoundException('Rule not found');
+
+        if (user.role !== 'admin' && rule.site.user.id !== user.userId) {
+            throw new NotFoundException('Access denied');
+        }
+
         await this.rulesRepository.delete(id);
     }
 

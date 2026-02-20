@@ -7,7 +7,8 @@ export enum RuleType {
     BLOCK_COUNTRY = 'BLOCK_COUNTRY',
     RATE_LIMIT = 'RATE_LIMIT',
     ALLOW_IP = 'ALLOW_IP',
-    CHALLENGE = 'CHALLENGE' // JS Challenge / Captcha
+    CHALLENGE = 'CHALLENGE', // JS Challenge / Captcha
+    CUSTOM_RULE = 'CUSTOM_RULE' // JSON based advanced rule
 }
 
 @Entity()

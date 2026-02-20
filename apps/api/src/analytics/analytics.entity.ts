@@ -8,6 +8,9 @@ export class Analytics {
     @Column()
     siteId: string;
 
+    @Column({ nullable: true })
+    userId: string;
+
     @Column()
     path: string;
 
