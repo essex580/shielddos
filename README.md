@@ -88,6 +88,9 @@ Heavy traffic bursting past absolute database limits is safely sequestered nativ
 ### 6. 🌐 Zero-Touch Auto SSL (SNI) & WebGL Dashboard
 The Edge Node HTTP Server has been structurally engineered with an SNI Callback hook! TLS cert requests are dynamically pulled directly from the Postgres Control Plane or Redis Cache. No Nginx reloads required. Observe everything in real-time through the Vue 3 WebGL globe, watching live laser arcs map DDoS strikes across the physical planet.
 
+### 7. 🤖 AI-Powered "Threat Intelligence" Suite (SIEM)
+ShieldDOS natively embeds Generative AI SDKs (Google Gemini Flash) directly into the NestJS Control Plane. The custom `/threat_logs` dashboard allows administrators to visualize deep PostgreSQL telemetry aggregations (Live 2D World Heatmaps & Top Attacking IPs). Clicking on any raw WAF event opens an AI forensic drawer that instantly translates the encrypted HTTP payload vector into an expert, human-readable threat analysis (e.g., *SQLi identification, XSS, Botnet correlation*).
+
 ---
 
 ## ⚙️ The Tech Stack

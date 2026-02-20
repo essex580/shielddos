@@ -1,5 +1,6 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto" @click.self="$emit('close')">
+  <Teleport to="body">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto" @click.self="$emit('close')">
     <div class="bg-zinc-950 border border-zinc-700 w-full max-w-md shadow-2xl rounded-xl transform transition-all flex flex-col max-h-full" role="dialog" aria-modal="true">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 rounded-t-xl shrink-0">
@@ -21,8 +22,9 @@
       <div v-if="$slots.footer" class="p-4 border-t border-zinc-800 bg-zinc-900/30 rounded-b-xl flex justify-end gap-3 shrink-0">
         <slot name="footer"></slot>
       </div>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

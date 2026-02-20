@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
     <div v-if="isOpen && site" class="fixed inset-0 z-50 flex justify-end">
         <!-- Backdrop Blur overlay -->
         <div 
@@ -271,6 +272,7 @@
             </div>
         </div>
     </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
