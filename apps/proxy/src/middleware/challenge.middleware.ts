@@ -54,7 +54,24 @@ export const handleChallenge = async (req: IncomingMessage, res: ServerResponse,
                 const searchParams = new URLSearchParams(body);
                 const token = searchParams.get('cf-turnstile-response');
 
-                if (!token || !site.turnstileSecretKey) {
+                // FALLBACK MODE (No Turnstile Keys Configured)
+                // If they reached here via the 3-second HTML delay form, issue the clearance cookie natively.
+                if (!site.turnstileSecretKey || !site.turnstileSiteKey) {
+                    const timestamp = Date.now();
+                    const hash = crypto.createHmac('sha256', SECRET).update(`${clientIp}.${timestamp}`).digest('hex');
+                    const clearanceCookie = `${hash}.${clientIp}.${timestamp}`;
+
+                    res.writeHead(302, {
+                        'Set-Cookie': `${COOKIE_NAME}=${clearanceCookie}; Path=/; HttpOnly; Max-Age=1800; SameSite=Lax`,
+                        'Location': originalUrl
+                    });
+                    res.end();
+                    resolve(true); // Handled perfectly
+                    return;
+                }
+
+                // If Turnstile IS active, but the user bypassed the UI and sent an empty token:
+                if (!token) {
                     serveChallengePage(res, site, originalUrl);
                     resolve(true);
                     return;
