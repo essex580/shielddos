@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="ShielDDoS Logo" width="300" />
+  ## ShielDDoS
   
   **Next-Generation Edge Routing, WAF, and Global Threat Mitigation Network**
 
