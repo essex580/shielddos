@@ -113,4 +113,17 @@ export class AnalyticsService {
         qb = qb.groupBy('a."ipAddress"').orderBy('count', 'DESC').limit(10);
         return qb.getRawMany();
     }
+
+    async getTrafficDistribution(user: any): Promise<any[]> {
+        let qb = this.analyticsRepository.createQueryBuilder('a')
+            .select('a.method', 'method')
+            .addSelect('COUNT(*)', 'count');
+
+        if (user.role !== 'admin') {
+            qb = qb.where('a."userId" = :userId', { userId: user.userId });
+        }
+
+        qb = qb.groupBy('a.method').orderBy('count', 'DESC');
+        return qb.getRawMany();
+    }
 }

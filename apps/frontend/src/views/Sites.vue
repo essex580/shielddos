@@ -112,6 +112,7 @@
       @toggle-graphql="toggleGraphql"
       @toggle-waitingroom="toggleWaitingRoom"
       @toggle-autossl="toggleAutoSsl"
+      @update-protected-routes="updateProtectedRoutes"
     />
 
     <!-- Add Modal -->
@@ -189,6 +190,7 @@ interface Site {
     isConfigured: boolean;
     checking?: boolean;
   };
+  protectedRoutes?: string[];
 }
 
 const sites = ref<Site[]>([])
@@ -349,7 +351,22 @@ const toggleGraphql = async () => {
         const s = sites.value.find(s => s.id === selectedSite.value.id);
         if (s) s.graphqlInspectionEnabled = newVal;
     } catch (e) {
-        console.error("Failed to toggle GraphQL AST Inspector", e);
+        console.error("Failed to toggle GraphQL Inspection", e);
+    }
+}
+
+const updateProtectedRoutes = async (jsonString: string) => {
+    if (!selectedSite.value) return;
+    try {
+        const parsed = JSON.parse(jsonString || "[]");
+        if (!Array.isArray(parsed)) throw new Error("Must be a JSON array");
+        await axios.patch(`${API_URL}/sites/${selectedSite.value.id}`, { protectedRoutes: parsed });
+        selectedSite.value.protectedRoutes = parsed;
+        const s = sites.value.find(s => s.id === selectedSite.value.id);
+        if (s) s.protectedRoutes = parsed;
+    } catch (e) {
+        console.error("Failed to update protected routes. Ensure valid JSON array format.", e);
+        alert("Invalid JSON Array. Please use format: [\"/admin\", \"/api/private\"]");
     }
 }
 

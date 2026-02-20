@@ -66,6 +66,11 @@ export class Site {
     @Column({ type: 'text', nullable: true })
     sslKey: string;
 
+    // --- PHASE 9 ENTERPRISE FEATURES ---
+
+    @Column({ type: 'jsonb', default: [] })
+    protectedRoutes: any; // e.g., ['/admin', '/api/private']
+
     @OneToMany(() => FirewallRule, (rule) => rule.site)
     firewallRules: FirewallRule[];
 

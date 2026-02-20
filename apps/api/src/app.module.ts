@@ -13,9 +13,17 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { UptimeModule } from './uptime/uptime.module';
 import { Uptime } from './uptime/uptime.entity';
 import { AiModule } from './ai/ai.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 @Module({
     imports: [
+        GraphQLModule.forRoot<ApolloDriverConfig>({
+            driver: ApolloDriver,
+            autoSchemaFile: true,
+            playground: true, // Enable GraphQL Playground IDE
+            csrfPrevention: false, // Ease of use for Edge analytics testing
+        }),
         ScheduleModule.forRoot(),
         TypeOrmModule.forRoot({
             type: 'postgres',

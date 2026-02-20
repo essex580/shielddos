@@ -91,6 +91,18 @@ The Edge Node HTTP Server has been structurally engineered with an SNI Callback 
 ### 7. 🤖 AI-Powered "Threat Intelligence" Suite (SIEM)
 ShieldDOS natively embeds Generative AI SDKs (Google Gemini Flash) directly into the NestJS Control Plane. The custom `/threat_logs` dashboard allows administrators to visualize deep PostgreSQL telemetry aggregations (Live 2D World Heatmaps & Top Attacking IPs). Clicking on any raw WAF event opens an AI forensic drawer that instantly translates the encrypted HTTP payload vector into an expert, human-readable threat analysis (e.g., *SQLi identification, XSS, Botnet correlation*).
 
+### 8. ⚡ Zero-Latency L7 Reverse CDN
+Proxy nodes intercept rigid static assets (`.png`, `.js`, `.css`) before they ever touch the origin Network Interface. Objects are ingested entirely into the Redis RAM Mesh. Successive requests for these assets bypass NodeJS piping entirely via the `serveCachedResponse` hyper-loop, dropping origin traffic footprints to zero.
+
+### 9. 🕳️ Infinite IP Tarpit (Honeypot)
+Rather than dropping connections from automated vulnerability scanners (`/wp-admin`, `/.env`), ShieldDOS catches them. The Proxy holds the intruder's TCP socket alive permanently, bleeding them with 1-byte chunked transfers every 10 seconds. This actively deteriorates botnet capabilities by exhausting attacker server threads.
+
+### 10. 🔒 Zero-Trust Edge JWT Authentication
+Select administrative endpoints (`/api/private`) bypass origin validation entirely. The Edge Proxy intrinsically halts traffic lacking a Cryptographically Signed `Authorization: Bearer <token>` HMAC-SHA256 signature, eliminating internal network routing for unauthorized threat actors.
+
+### 11. 📊 Automated GraphQL Telemetry
+REST polling has been exterminated. The entire Reactivity Engine relies on a singular, massive Apollo GraphQL resolver. NestJS parallel-queries PostgreSQL for statistical distributions while hitting Redis for momentary Cache/Tarpit analytics, rendering real-time Vue 3 Doughnut charts at peak efficiency.
+
 ---
 
 ## ⚙️ The Tech Stack

@@ -22,11 +22,20 @@ export async function serveCachedResponse(req: IncomingMessage, res: ServerRespo
                 ...data.headers
             });
             res.end(Buffer.from(data.body, 'base64'));
+
+            const [hostname] = host.split(':');
+            redis.incr(`metrics:cache:hit:${hostname}`).catch(() => { });
+
             return true; // Successfully served from cache
         }
     } catch (e) {
         console.error('Cache Read Error:', e);
     }
+
+    // If it reaches here and is a valid static extension, it's a cache miss
+    const [hostname] = host.split(':');
+    redis.incr(`metrics:cache:miss:${hostname}`).catch(() => { });
+
     return false;
 }
 

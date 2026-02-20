@@ -155,6 +155,7 @@ import { serveCachedResponse, interceptAndCacheResponse } from './middleware/cac
 import { isBlacklistedIp } from './middleware/reputation.middleware';
 import { inspectGraphQLPayload } from './middleware/graphql-inspector.middleware';
 import { handleWaitingRoom } from './middleware/waiting-room.middleware';
+import { verifyEdgeJwt } from './middleware/jwt.middleware';
 
 // Hard limits for DDoS mitigation
 const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
@@ -336,6 +337,11 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
             }
         }
 
+        // Layer 0.8: Zero-Trust JWT Edge Authentication
+        if (verifyEdgeJwt(req, res, site)) {
+            return; // Request was blocked due to missing/invalid JWT
+        }
+
         // Layer 1: Bot Filter
         if (site.botProtection) {
             if (isBot(req)) {
@@ -399,6 +405,49 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
                 // If the stream analyzer actively killed the request because of toxic depths, abort routing!
                 return;
             }
+        }
+
+        // Layer 1.8: Malicious Scanner Tarpit (Honeypot)
+        const urlStr = req.url || '';
+        const tarpitPaths = ['/wp-admin', '/.env', '/config.php', '/xmlrpc.php', '/phpmyadmin'];
+        if (tarpitPaths.some(p => urlStr.toLowerCase().includes(p))) {
+            console.log(`[Tarpit] 🕳️ Caught scanner ${ip} looking for ${urlStr}. Engaging HoneyPot Protocol.`);
+
+            // Hang the connection open indefinitely
+            res.writeHead(200, {
+                'Content-Type': 'text/html',
+                'Transfer-Encoding': 'chunked',
+                'X-Content-Type-Options': 'nosniff',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+            });
+
+            // Send 1 random byte every 10 seconds to keep the socket alive but exhaust attacker threads
+            const trapInterval = setInterval(() => {
+                if (res.writableEnded || req.socket.destroyed) {
+                    clearInterval(trapInterval);
+                } else {
+                    res.write(Buffer.from([Math.floor(Math.random() * 256)]));
+                }
+            }, 10000);
+
+            // Publish a metric to Redis for the Dashboard Graph
+            const [hostname] = host.split(':');
+            redis.incr(`metrics:tarpit:active:${hostname}`).catch(() => { });
+
+            // Log Tarpit engagement
+            axios.post(`${API_URL}/analytics`, {
+                siteId: site.id,
+                userId: site.userId,
+                path: req.url,
+                method: req.method,
+                ipAddress: ip,
+                statusCode: 418, // 418 I'm a Teapot indicates a Tarpit snare in our Dashboard
+                userAgent: req.headers['user-agent'] || 'unknown',
+                blocked: true,
+                country
+            }).catch(err => console.error('API Log Error:', err.message));
+
+            return; // Halt execution, plunge attacker into the Black Hole!
         }
 
         // Layer 2: Challenge / Under Attack Mode

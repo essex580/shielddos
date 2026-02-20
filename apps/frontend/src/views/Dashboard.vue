@@ -175,6 +175,63 @@
         </div>
       </div>
     </div>
+
+    <!-- Advanced Edge Analytics Row (Phase 9 GraphQL) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Traffic Distribution -->
+       <div class="terminal-card flex flex-col p-5">
+         <h3 class="font-bold text-white mb-4 w-full text-left flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
+           <Filter class="w-4 h-4 text-emerald-500" /> Layer 7 Methods
+         </h3>
+         <div class="h-32 w-full relative flex items-center justify-center mt-2">
+            <Doughnut v-if="trafficDistChartData.datasets[0].data.length > 0" :data="trafficDistChartData" :options="chartOptionsDoughnut" />
+            <div v-else class="text-zinc-600 font-mono text-xs text-center border-4 border-zinc-800 rounded-full w-24 h-24 flex items-center justify-center">No Data</div>
+         </div>
+       </div>
+
+       <!-- Edge Cache Hit Ratio -->
+       <div class="terminal-card flex flex-col p-5">
+         <h3 class="font-bold text-white mb-4 w-full text-left flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
+           <Database class="w-4 h-4 text-blue-500" /> Edge Cache CDN
+         </h3>
+         <div class="flex items-center gap-4 w-full mt-2">
+            <div class="h-28 w-28 relative flex-shrink-0">
+                <Doughnut v-if="cacheHitChartData.datasets[0].data.reduce((a, b) => a + b, 0) > 0" :data="cacheHitChartData" :options="chartOptionsDoughnut" />
+                <div v-else class="flex h-full items-center justify-center border-4 border-zinc-800 rounded-full text-zinc-600 text-[10px] w-full text-center">Empty</div>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+                <div class="bg-zinc-900/50 p-2 rounded-lg border border-zinc-800 flex justify-between items-center">
+                    <span class="text-[10px] text-zinc-500 font-bold uppercase">Hits (RAM-bound)</span>
+                    <span class="text-xs text-emerald-400 font-mono">{{ stats.cacheHits }}</span>
+                </div>
+                <div class="bg-zinc-900/50 p-2 rounded-lg border border-zinc-800 flex justify-between items-center">
+                    <span class="text-[10px] text-zinc-500 font-bold uppercase">Misses (Origin)</span>
+                    <span class="text-xs text-zinc-400 font-mono">{{ stats.cacheMisses }}</span>
+                </div>
+            </div>
+         </div>
+       </div>
+
+       <!-- Active Tarpits -->
+       <div class="terminal-card flex flex-col p-5 justify-between">
+         <div class="w-full">
+             <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm border-b border-zinc-800 pb-3">
+               <HardDrive class="w-4 h-4 text-purple-500" /> Persistent Tarpits
+             </h3>
+             <p class="text-[10px] text-zinc-400 mb-6 leading-relaxed">Malicious vulnerability scanners permanently suspended in 1-byte TCP proxy loops. Draining attacker server resources.</p>
+         </div>
+         <div class="w-full flex items-end justify-between border-t border-zinc-800/50 pt-4 mt-auto">
+             <div>
+                <h3 class="text-5xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">{{ stats.activeTarpits }}</h3>
+             </div>
+             <div class="text-[10px] font-bold text-purple-400/50 uppercase flex items-center gap-1 animate-pulse">
+                <span class="w-1.5 h-1.5 bg-purple-500 rounded-full"></span> Traps Active
+             </div>
+         </div>
+       </div>
+
+    </div>
   </div>
 </template>
 
@@ -182,13 +239,13 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import axios from 'axios'
 import { io, Socket } from 'socket.io-client'
-import { Activity, RefreshCw, BarChart3, ShieldAlert, Globe, Users, List, Zap, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-vue-next';
-import { Line } from 'vue-chartjs'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js'
+import { Activity, RefreshCw, BarChart3, ShieldAlert, Globe, Users, List, Zap, ChevronLeft, ChevronRight, ShieldCheck, Database, HardDrive, Filter } from 'lucide-vue-next';
+import { Line, Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js'
 import NetworkGlobe from '../components/NetworkGlobe.vue';
 import { getGeoCoordinates } from '../utils/geo';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement)
 
 interface Log {
   id: string;
@@ -206,6 +263,9 @@ const stats = ref({
     blocked: 0,
     activeSites: 0,
     uniqueIps: 0,
+    activeTarpits: 0,
+    cacheHits: 0,
+    cacheMisses: 0
 })
 
 const siteStore = ref<any[]>([]);
@@ -280,6 +340,52 @@ const chartOptions = {
     }
 }
 
+const chartOptionsDoughnut = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '75%',
+    plugins: {
+        legend: { display: false },
+        tooltip: {
+            backgroundColor: '#09090b',
+            titleColor: '#fff',
+            bodyColor: '#a1a1aa',
+            borderColor: '#27272a',
+            borderWidth: 1,
+            titleFont: { family: 'JetBrains Mono' },
+            bodyFont: { family: 'JetBrains Mono' },
+            displayColors: true,
+            padding: 10
+        }
+    }
+}
+
+const trafficDistChartData = computed(() => {
+    return {
+        labels: trafficDist.value.map(d => d.name),
+        datasets: [{
+            data: trafficDist.value.map(d => parseInt(d.value)),
+            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
+            borderColor: '#09090b',
+            borderWidth: 3,
+            hoverOffset: 4
+        }]
+    }
+})
+
+const cacheHitChartData = computed(() => {
+    return {
+        labels: ['Hits', 'Misses'],
+        datasets: [{
+            data: [stats.value.cacheHits, stats.value.cacheMisses],
+            backgroundColor: ['#10b981', '#52525b'],
+            borderColor: '#09090b',
+            borderWidth: 3,
+            hoverOffset: 4
+        }]
+    }
+})
+
 // Pagination ... (keep existing)
 const currentPage = ref(1)
 const itemsPerPage = 10
@@ -300,16 +406,8 @@ const prevPage = () => {
     if (currentPage.value > 1) currentPage.value--
 }
 
-const topIps = computed(() => {
-  const counts: Record<string, number> = {};
-  logs.value.forEach(l => {
-    counts[l.ipAddress] = (counts[l.ipAddress] || 0) + 1;
-  });
-  return Object.entries(counts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([ip, count]) => ({ ip, count }));
-});
+const topIps = ref<any[]>([]);
+const trafficDist = ref<any[]>([]);
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -320,10 +418,13 @@ const fetchData = async () => {
         siteStore.value = siteRes.data;
         stats.value.activeSites = siteRes.data.filter((s: any) => s.isActive).length;
 
+        // Fetch Raw Logs for Table
         const logRes = await axios.get(`${API_URL}/analytics`);
         logs.value = logRes.data; 
         
-        updateStats();
+        // Fetch Phase 9 GraphQL Aggregations
+        await fetchGraphql();
+
         // Initial chart fetch
         await updateChart();
 
@@ -331,6 +432,39 @@ const fetchData = async () => {
         console.error("Error fetching dashboard data", e);
     } finally {
         loading.value = false;
+    }
+}
+
+const fetchGraphql = async () => {
+    try {
+        const query = `
+            query {
+              getGlobalAnalytics {
+                totalRequests
+                blockedRequests
+                activeTarpits
+                cacheHits
+                cacheMisses
+                topIps { name value }
+                trafficDistribution { name value }
+              }
+            }
+        `;
+        const res = await axios.post(`${API_URL}/graphql`, { query }, {
+            withCredentials: true
+        });
+        const data = res.data.data?.getGlobalAnalytics;
+        if (data) {
+            stats.value.totalRequests = data.totalRequests;
+            stats.value.blocked = data.blockedRequests;
+            stats.value.activeTarpits = data.activeTarpits || 0;
+            stats.value.cacheHits = data.cacheHits || 0;
+            stats.value.cacheMisses = data.cacheMisses || 0;
+            topIps.value = (data.topIps || []).slice(0, 5).map((d: any) => ({ ip: d.name, count: d.value }));
+            trafficDist.value = data.trafficDistribution || [];
+        }
+    } catch (e) {
+        console.error('GraphQL Error', e);
     }
 }
 
@@ -357,9 +491,8 @@ const updateChart = async () => {
     }
 }
 
+// Stats calculate unique IPs locally as it's purely UI log based
 const updateStats = () => {
-    stats.value.totalRequests = logs.value.length;
-    stats.value.blocked = logs.value.filter(l => l.blocked).length;
     stats.value.uniqueIps = new Set(logs.value.map(l => l.ipAddress)).size;
 }
 
@@ -372,9 +505,11 @@ onMounted(() => {
         console.log('Connected to WebSocket');
     });
 
-    socket.value.on('new_traffic', (data: any) => {
+    socket.value.on('new_traffic', async (data: any) => {
         logs.value.unshift(data);
         updateStats();
+        // Background refresh graph silently on traffic spike
+        if (Math.random() < 0.2) fetchGraphql(); 
 
         // 3D WebGL Globe Logic
         // Calculate Attacker Geo

@@ -265,6 +265,23 @@
                                         placeholder="<html>&#10;  <body>&#10;    <h1>Origin Offline (502)</h1>&#10;  </body>&#10;</html>"></textarea>
                                 </div>
                             </div>
+                            
+                            <!-- Zero-Trust Edge JWT -->
+                            <div class="bg-zinc-900/40 border border-emerald-900/40 rounded-lg p-4 space-y-4">
+                                <h4 class="text-xs font-bold text-emerald-400 border-b border-emerald-900/50 pb-2 mb-3 flex items-center gap-2">
+                                    <Lock class="w-4 h-4" /> Zero-Trust Edge Authentication
+                                </h4>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-zinc-500 uppercase mb-1">Protected Routes (JSON Array)</label>
+                                    <textarea 
+                                        :value="JSON.stringify(site.protectedRoutes || [], null, 2)" 
+                                        @change="(e) => $emit('update-protected-routes', (e.target as HTMLTextAreaElement).value)" 
+                                        class="w-full bg-zinc-950 border border-emerald-900/30 p-3 text-emerald-400 font-mono text-xs rounded-md focus:border-emerald-500 h-24 placeholder-zinc-800 focus:outline-none resize-none" 
+                                        placeholder='["/admin", "/api/private"]'></textarea>
+                                </div>
+                                <p class="text-[10px] text-zinc-500 leading-tight">Paths listed here completely bypass the backend unless the request contains a cryptographically signed <strong class="text-zinc-300 font-mono">Authorization: Bearer &lt;token&gt;</strong> header. Invalid requests are instantly dropped by the Node Edge Proxy.</p>
+                            </div>
+                            
                         </div>
 
                     </div>
@@ -298,7 +315,8 @@ const emit = defineEmits([
     'toggle-autowaf',
     'toggle-graphql',
     'toggle-waitingroom',
-    'toggle-autossl'
+    'toggle-autossl',
+    'update-protected-routes'
 ]);
 
 const activeSubTab = ref<'rules' | 'advanced'>('rules');
