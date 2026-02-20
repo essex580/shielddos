@@ -8,6 +8,13 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import Globe from 'globe.gl';
 
+// Suppress THREE.Clock deprecation warning from globe.gl internls
+const originalWarn = console.warn;
+console.warn = (...args) => {
+    if (typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) return;
+    originalWarn.apply(console, args);
+};
+
 const props = defineProps<{
     attacks: any[] // { startLat, startLng, endLat, endLng, color }
 }>();

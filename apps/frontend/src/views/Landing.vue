@@ -35,25 +35,34 @@
       </nav>
 
       <!-- Hero Section -->
-      <div class="flex flex-col items-center justify-center text-center max-w-4xl mx-auto mb-32 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150 fill-mode-both">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest mb-8 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
-            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            Enterprise Edge Defense Platform
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto mb-32 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150 fill-mode-both">
+        
+        <!-- Globe on the Left -->
+        <div class="order-2 lg:order-1 relative w-full h-[350px] lg:h-[450px] rounded-2xl overflow-hidden border border-zinc-800/50 shadow-[0_0_30px_rgba(59,130,246,0.1)] bg-[#09090b]/50 backdrop-blur-sm pointer-events-none">
+           <NetworkGlobe :attacks="simulatedAttacks" />
         </div>
-        
-        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1]">
-            <span class="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-400">Zero-Trust.</span><br/>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Absolute Mitigation.</span>
-        </h1>
-        
-        <p class="text-lg text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            A next-generation Layer 7 CDN, Artificial Intelligence WAF, and global Threat Telemetry mesh. Intercept malicious vulnerability scanners in infinite honeypots, serve assets at 0-ms latency, and secure backend routing via cryptographic edge signatures.
-        </p>
 
-        <div class="flex items-center gap-6">
-            <button @click="$emit('go-to-login')" class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] hover:-translate-y-1 flex items-center gap-3">
-                <Terminal class="w-5 h-5" /> Initialize Control Plane
-            </button>
+        <!-- Text on the Right -->
+        <div class="order-1 lg:order-2 flex flex-col items-start justify-center text-left">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-widest mb-6 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                Enterprise Edge Defense Platform
+            </div>
+            
+            <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+                <span class="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-400">Zero-Trust.</span><br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Absolute Mitigation.</span>
+            </h1>
+            
+            <p class="text-lg text-zinc-400 max-w-xl mb-8 leading-relaxed">
+                A next-generation Layer 7 CDN, Artificial Intelligence WAF, and global Threat Telemetry mesh. Intercept malicious vulnerability scanners in infinite honeypots, serve assets at 0-ms latency, and secure backend routing via cryptographic edge signatures.
+            </p>
+
+            <div class="flex items-center gap-6">
+                <button @click="$emit('go-to-login')" class="px-8 py-4 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg font-bold text-lg border border-blue-600/50 transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)] hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:-translate-y-1 flex items-center gap-3">
+                    <Terminal class="w-5 h-5" /> Initialize Control Plane
+                </button>
+            </div>
         </div>
       </div>
 
@@ -61,7 +70,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300 fill-mode-both">
           
         <!-- Feature 1 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-blue-500 hover:to-purple-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-blue-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl w-fit border border-blue-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all">
                     <BrainCircuit class="w-6 h-6" />
@@ -72,7 +81,7 @@
         </div>
 
         <!-- Feature 2 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-purple-500 hover:to-pink-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-purple-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl w-fit border border-purple-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all">
                     <HardDrive class="w-6 h-6" />
@@ -83,7 +92,7 @@
         </div>
 
         <!-- Feature 3 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-emerald-500 hover:to-teal-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-emerald-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl w-fit border border-emerald-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all">
                     <Lock class="w-6 h-6" />
@@ -94,7 +103,7 @@
         </div>
 
         <!-- Feature 4 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-cyan-500 hover:to-blue-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-cyan-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl w-fit border border-cyan-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all">
                     <Zap class="w-6 h-6" />
@@ -105,7 +114,7 @@
         </div>
 
         <!-- Feature 5 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-rose-500 hover:to-red-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-rose-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl w-fit border border-rose-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all">
                     <Globe class="w-6 h-6" />
@@ -116,7 +125,7 @@
         </div>
 
         <!-- Feature 6 -->
-        <div class="group relative p-[1px] rounded-2xl bg-gradient-to-b from-zinc-800 to-zinc-950 hover:from-amber-500 hover:to-orange-600 transition-all duration-500">
+        <div class="group relative rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-amber-500/50 transition-colors duration-500">
             <div class="h-full bg-zinc-950/90 backdrop-blur-xl p-8 rounded-2xl flex flex-col gap-4">
                 <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl w-fit border border-amber-500/20 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all">
                     <BarChart3 class="w-6 h-6" />
@@ -143,7 +152,38 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Shield, Github, ArrowRight, BrainCircuit, HardDrive, Lock, Zap, Globe, BarChart3, Terminal } from 'lucide-vue-next';
+import NetworkGlobe from '../components/NetworkGlobe.vue';
 
 defineEmits(['go-to-login']);
+
+const simulatedAttacks = ref<any[]>([]);
+let attackInterval: any;
+
+onMounted(() => {
+    // Simulate complex Enterprise edge traffic
+    attackInterval = setInterval(() => {
+        const startLat = (Math.random() - 0.5) * 160;
+        const startLng = (Math.random() - 0.5) * 360;
+        const endLat = 38.9072; // Defend specific central node (DC)
+        const endLng = -77.0369;
+        
+        const isBlocked = Math.random() > 0.4;
+        
+        simulatedAttacks.value.push({
+            startLat, startLng, endLat, endLng,
+            color: isBlocked ? '#ef4444' : '#10b981', // Red for blocked, Green for Cache hit
+            timestamp: Date.now()
+        });
+
+        if (simulatedAttacks.value.length > 20) {
+            simulatedAttacks.value.shift();
+        }
+    }, 600); // Super fast telemetry synthesis
+});
+
+onUnmounted(() => {
+    if (attackInterval) clearInterval(attackInterval);
+});
 </script>
