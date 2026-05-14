@@ -12,6 +12,7 @@
         "axios": "^1.4.0",
         "chart.js": "^4.3.0",
         "globe.gl": "^2.45.0",
+        "topojson-client": "^3.1.0",
         "lucide-vue-next": "^0.575.0",
         "socket.io-client": "^4.8.3",
         "three": "^0.183.0",
@@ -19,6 +20,7 @@
         "vue-chartjs": "^5.2.0"
     },
     "devDependencies": {
+        "@types/topojson-client": "^3.1.5",
         "@vitejs/plugin-vue": "^4.2.3",
         "autoprefixer": "^10.4.14",
         "postcss": "^8.4.24",
