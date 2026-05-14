@@ -8,12 +8,16 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
-    "turbo": "latest",
-    "prettier": "latest"
+    "prettier": "latest",
+    "turbo": "latest"
   },
   "packageManager": "npm@10.0.0",
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@types/topojson-client": "^3.1.5",
+    "topojson-client": "^3.1.0"
+  }
 }

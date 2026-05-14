@@ -7,7 +7,7 @@ import { promisify } from 'util';
 import axios from 'axios';
 import Redis from 'ioredis';
 
-const resolve4 = promisify(dns.resolve4);
+const lookup = promisify(dns.lookup);
 
 @Injectable()
 export class SitesService {
@@ -55,8 +55,8 @@ export class SitesService {
         try {
             // If checking a wildcard like *.example.com, strip the *. for DNS resolution
             const domainToResolve = site.domain.startsWith('*.') ? site.domain.substring(2) : site.domain;
-            const ips = await resolve4(domainToResolve);
-            const resolvedIp = ips[0];
+            const lookupResult = await lookup(domainToResolve);
+            const resolvedIp = lookupResult.address;
 
             let publicIp = process.env.PUBLIC_IP;
             if (!publicIp) {

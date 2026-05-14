@@ -1,13 +1,13 @@
 import { Controller, Post, Body, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AiService } from './ai.service';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('ai')
 export class AiController {
     constructor(private readonly aiService: AiService) { }
 
     @Post('explain-threat')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     async explainThreat(@Body() logData: any): Promise<{ explanation: string }> {
         if (!logData || !logData.ip) {
             throw new HttpException('Invalid Threat Log Payload', HttpStatus.BAD_REQUEST);
@@ -18,7 +18,7 @@ export class AiController {
     }
 
     @Post('query-logs')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     async queryLogs(@Body() payload: { prompt: string }): Promise<any> {
         // Future iteration: AI parsing Natural Language to SQL
         return {

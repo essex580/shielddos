@@ -192,11 +192,17 @@
                         <div class="flex items-center gap-4 border-b border-zinc-800 pb-2">
                              <button @click="activeSubTab = 'rules'" class="text-xs font-semibold pb-2 border-b-2 transition-colors" :class="activeSubTab === 'rules' ? 'text-white border-blue-500' : 'text-zinc-500 border-transparent hover:text-zinc-300'">Firewall Rules</button>
                              <button @click="activeSubTab = 'advanced'" class="text-xs font-semibold pb-2 border-b-2 transition-colors" :class="activeSubTab === 'advanced' ? 'text-white border-blue-500' : 'text-zinc-500 border-transparent hover:text-zinc-300'">Advanced Settings</button>
+                             <button @click="activeSubTab = 'waiting-room'" class="text-xs font-semibold pb-2 border-b-2 transition-colors" :class="activeSubTab === 'waiting-room' ? 'text-white border-[#f6821f]' : 'text-[#888] border-transparent hover:text-white'">Traffic Limits</button>
                         </div>
 
                         <!-- Rules Tab Content -->
                         <div v-if="activeSubTab === 'rules'" class="pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <FirewallRules :siteId="site.id" :siteDomain="site.domain" />
+                        </div>
+
+                        <!-- Waiting Room Content -->
+                        <div v-if="activeSubTab === 'waiting-room'" class="pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <WaitingRoomUI :site="site" @toggle="k => $emit('toggle-' + k.toLowerCase().replace('enabled', ''))" />
                         </div>
 
                         <!-- Advanced Settings Tab Content -->
@@ -297,6 +303,7 @@ import { ref } from 'vue';
 import { X, RefreshCw, ShieldCheck, Bot, AlertTriangle, Cpu, Network, Timer, Lock } from 'lucide-vue-next';
 import UptimeChart from './UptimeChart.vue';
 import FirewallRules from './FirewallRules.vue';
+import WaitingRoomUI from './WaitingRoomUI.vue';
 
 const props = defineProps<{
     site: any | null,
@@ -325,3 +332,7 @@ const updateCustomPages = (type: '403' | '502', value: string) => {
     emit('update-pages', { type, value });
 };
 </script>
+
+
+
+

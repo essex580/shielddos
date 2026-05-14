@@ -126,4 +126,29 @@ export class AnalyticsService {
         qb = qb.groupBy('a.method').orderBy('count', 'DESC');
         return qb.getRawMany();
     }
+
+    async getBandwidthStats(user: any): Promise<any[]> {
+        if (user.role === 'admin') {
+            return this.analyticsRepository.query(`
+                SELECT 
+                    to_char(timestamp, 'HH24:MI') as time,
+                    SUM(COALESCE(bandwidth, 0)) as bytes
+                FROM analytics
+                WHERE timestamp > NOW() - INTERVAL '1 hour'
+                GROUP BY to_char(timestamp, 'HH24:MI')
+                ORDER BY min(timestamp) ASC
+            `);
+        } else {
+            return this.analyticsRepository.query(`
+                SELECT 
+                    to_char(timestamp, 'HH24:MI') as time,
+                    SUM(COALESCE(bandwidth, 0)) as bytes
+                FROM analytics
+                WHERE timestamp > NOW() - INTERVAL '1 hour'
+                AND "userId" = $1
+                GROUP BY to_char(timestamp, 'HH24:MI')
+                ORDER BY min(timestamp) ASC
+            `, [user.userId]);
+        }
+    }
 }

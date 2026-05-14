@@ -1,11 +1,11 @@
 
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FirewallRulesService } from './firewall-rules.service';
 import { FirewallRule } from './firewall-rule.entity';
 
 @Controller('sites/:siteId/rules')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class FirewallRulesController {
     constructor(private readonly rulesService: FirewallRulesService) { }
 

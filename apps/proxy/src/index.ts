@@ -161,6 +161,32 @@ import { verifyEdgeJwt } from './middleware/jwt.middleware';
 const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024; // 15MB
 const REQUEST_TIMEOUT = 30000; // 30 seconds (Slowloris protection)
 
+// Global Security State
+let globalSecurityLevel = 'standard';
+let globalWafRules: any[] = [];
+
+// Sync state from Redis every 5 seconds
+setInterval(async () => {
+    try {
+        globalSecurityLevel = await redis.get('shield:security:level') || 'standard';
+        const rules = await redis.get('shield:waf:rules');
+        if (rules) {
+            globalWafRules = JSON.parse(rules);
+        }
+    } catch (e) {
+        console.error('[WAF Sync] Error syncing rules from Redis:', e);
+    }
+}, 5000);
+
+// Initial sync
+(async () => {
+    try {
+        globalSecurityLevel = await redis.get('shield:security:level') || 'standard';
+        const rules = await redis.get('shield:waf:rules');
+        if (rules) globalWafRules = JSON.parse(rules);
+    } catch (e) {}
+})();
+
 const server = http.createServer(appHandler);
 const httpsServer = https.createServer(sslOptions, appHandler);
 
@@ -208,6 +234,20 @@ async function resolveSite(host: string, req: http.IncomingMessage, res: http.Se
 }
 
 async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
+    const requestStartTime = Date.now();
+    
+    // 0. Auto-SSL ACME Challenge Interception
+    if (req.url?.startsWith('/.well-known/acme-challenge/')) {
+        const token = req.url.split('/').pop();
+        if (token) {
+            const keyAuth = await redis.get(`acme:${token}`);
+            if (keyAuth) {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end(keyAuth);
+                return;
+            }
+        }
+    }
     // 1. Slowloris Mitigation (Drop slow connections)
     res.setTimeout(REQUEST_TIMEOUT, () => {
         console.log(`[Timeout] Connection dropped against Slowloris attack: ${req.socket.remoteAddress}`);
@@ -276,6 +316,60 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         res.end('ShieldDOS: Access Denied (Global Threat Intelligence Match)');
         req.socket.destroy();
         return;
+    }
+
+    // Layer 0.2: Under Attack Mode (Global Challenge)
+    if (globalSecurityLevel === 'under_attack') {
+        // Skip challenge for static assets to avoid breaking the page
+        const isStaticAsset = req.url?.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|ttf|eot)$/i);
+        if (!isStaticAsset) {
+            // We pass a dummy 'site' object to handleChallenge because it expects one for Turnstile keys.
+            // If they are missing, it will fallback to Hashcash/Wait challenge.
+            const dummySite = { domain: host };
+            const handled = await handleChallenge(req, res, dummySite);
+            if (handled) return; // Request trapped by challenge
+        }
+    }
+
+    // Layer 0.3: Custom WAF Rules Engine
+    if (globalWafRules.length > 0) {
+        for (const rule of globalWafRules) {
+            let match = false;
+            let fieldValue = '';
+            
+            switch (rule.field) {
+                case 'ip': fieldValue = ip; break;
+                case 'country': fieldValue = country; break;
+                case 'path': fieldValue = req.url?.split('?')[0] || ''; break;
+                case 'method': fieldValue = req.method || ''; break;
+                case 'user_agent': fieldValue = req.headers['user-agent'] || ''; break;
+            }
+
+            switch (rule.operator) {
+                case 'equals': match = (fieldValue === rule.value); break;
+                case 'not_equals': match = (fieldValue !== rule.value); break;
+                case 'contains': match = fieldValue.includes(rule.value); break;
+                case 'in': 
+                    const arr = rule.value.split(',').map((s: string) => s.trim());
+                    match = arr.includes(fieldValue); 
+                    break;
+            }
+
+            if (match) {
+                console.log(`[WAF Engine] Rule '${rule.name}' MATCHED on ${ip}. Action: ${rule.action}`);
+                if (rule.action === 'block') {
+                    res.writeHead(403, { 'Content-Type': 'text/plain' });
+                    res.end('ShieldDOS: Blocked by Custom WAF Rule');
+                    return;
+                } else if (rule.action === 'challenge') {
+                    const dummySite = { domain: host };
+                    const handled = await handleChallenge(req, res, dummySite);
+                    if (handled) return;
+                } else if (rule.action === 'bypass') {
+                    break; // Stop evaluating further rules, allow request
+                }
+            }
+        }
     }
 
     try {
@@ -529,18 +623,26 @@ async function appHandler(req: http.IncomingMessage, res: http.ServerResponse) {
         }
 
         // 4. Log Request (Async via API)
-        // Only log if not already logged by middleware (e.g. bot block)
-        axios.post(`${API_URL}/analytics`, {
-            siteId: site.id,
-            userId: site.userId,
-            path: req.url,
-            method: req.method,
-            ipAddress: ip,
-            statusCode: blocked ? 403 : 200, // This might be inaccurate if upstream returns 404/500, but good enough for Access Log
-            userAgent: req.headers['user-agent'] || 'unknown',
-            blocked,
-            country
-        }).catch(err => console.error('API Log Error:', err.message));
+        // Hook into response finish to capture true latency and bandwidth
+        res.on('finish', () => {
+            const responseTime = Date.now() - requestStartTime;
+            // Approximate bandwidth: bytesRead (request) + bytesWritten (response)
+            const bandwidth = (req.socket?.bytesRead || 0) + (res.socket?.bytesWritten || 0);
+            
+            axios.post(`${API_URL}/analytics`, {
+                siteId: site.id,
+                userId: site.userId,
+                path: req.url,
+                method: req.method,
+                ipAddress: ip,
+                statusCode: blocked ? 403 : (res.statusCode || 200),
+                userAgent: req.headers['user-agent'] || 'unknown',
+                blocked,
+                country,
+                responseTime,
+                bandwidth
+            }).catch(err => console.error('API Log Error:', err.message));
+        });
 
         if (blocked) {
             res.writeHead(403, { 'Content-Type': site.customErrorPage403 ? 'text/html' : 'text/plain' });
@@ -673,3 +775,5 @@ const wsUpgradeHandler = async (req: http.IncomingMessage, socket: any, head: an
 
 server.on('upgrade', wsUpgradeHandler);
 httpsServer.on('upgrade', wsUpgradeHandler);
+
+// Trigger reload

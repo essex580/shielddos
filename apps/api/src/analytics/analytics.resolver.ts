@@ -1,6 +1,6 @@
 import { Resolver, Query, Context } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AnalyticsService } from './analytics.service';
 import { DashboardAnalytics } from './analytics.type';
 import Redis from 'ioredis';
@@ -14,7 +14,7 @@ export class AnalyticsResolver {
     }
 
     @Query(() => DashboardAnalytics)
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGuard)
     async getGlobalAnalytics(@Context() context): Promise<DashboardAnalytics> {
         const user = context.req.user;
 

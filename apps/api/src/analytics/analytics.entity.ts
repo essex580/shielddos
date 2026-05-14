@@ -32,6 +32,12 @@ export class Analytics {
     @Column({ default: false })
     blocked: boolean;
 
+    @Column({ type: 'int', nullable: true })
+    bandwidth: number;
+
+    @Column({ type: 'int', nullable: true })
+    responseTime: number;
+
     @CreateDateColumn()
     timestamp: Date;
 }

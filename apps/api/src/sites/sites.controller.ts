@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Param, Delete, UseGuards, Patch, Request } from '@nestjs/common';
 import { SitesService } from './sites.service';
 import { Site } from './site.entity';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('sites')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class SitesController {
     constructor(private readonly sitesService: SitesService) { }
 

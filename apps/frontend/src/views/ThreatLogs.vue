@@ -9,21 +9,13 @@
         <p class="text-xs text-zinc-500 mt-1">AI-Powered Forensic Analysis & Global SIEM Aggregation</p>
       </div>
 
-      <!-- AI Search Input -->
-      <div class="relative w-96 group">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Sparkles class="h-4 w-4 text-emerald-400 opacity-70 group-focus-within:opacity-100 transition-opacity" />
-        </div>
-        <input 
-          v-model="searchQuery" 
-          @keyup.enter="performSearch"
-          type="text" 
-          class="block w-full pl-10 pr-3 py-2 border border-zinc-800 rounded-lg leading-5 bg-zinc-900/50 text-zinc-300 placeholder-zinc-500 focus:outline-none focus:bg-zinc-900 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all sm:text-sm font-mono" 
-          placeholder="Ask AI: 'Who attacked the login API today?'" 
-        />
-        <div class="absolute inset-y-0 right-0 pr-2 flex items-center">
-            <kbd class="hidden sm:inline-block border border-zinc-800 rounded px-2 py-0.5 text-[10px] font-sans text-zinc-500">↵</kbd>
-        </div>
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <button @click="performAiAnalysis" :disabled="analyzingAi" class="terminal-button border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center gap-2 text-xs font-bold px-4 py-2 rounded">
+            <Sparkles v-if="!analyzingAi" class="w-4 h-4" />
+            <Loader2 v-else class="w-4 h-4 animate-spin" />
+            {{ analyzingAi ? 'Analyzing Traffic...' : 'AI Threat Analysis' }}
+        </button>
       </div>
     </div>
 
@@ -232,6 +224,7 @@ import {
     ShieldAlert, Sparkles, Shield, Activity, Database, Crosshair, 
     ListFilter, RefreshCw, Loader2, CheckCircle2, X, ShieldCheck
 } from 'lucide-vue-next';
+import TerminalModal from '../components/TerminalModal.vue';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -244,6 +237,9 @@ const searchQuery = ref('');
 const selectedLog = ref<any>(null);
 const aiLoading = ref(false);
 const aiExplanation = ref('');
+const analyzingAi = ref(false)
+const showAiModal = ref(false)
+const aiReport = ref('')
 
 const fetchLogs = async () => {
     loading.value = true;
@@ -264,6 +260,38 @@ const fetchLogs = async () => {
     }
 };
 
+const performAiAnalysis = async () => {
+    const settingsStr = localStorage.getItem('shield_settings');
+    const geminiKey = settingsStr ? JSON.parse(settingsStr).geminiKey : null;
+    
+    if (!geminiKey) {
+        alert('Google Gemini API Key is missing! Please configure it in Platform Settings -> AI Features.');
+        return;
+    }
+
+    analyzingAi.value = true;
+    
+    // Prepare log data
+    const logData = logs.value.slice(0, 100).map(l => 
+        `[${l.blocked ? 'BLOCKED' : 'ALLOWED'}] IP: ${l.ipAddress} (${l.country}) -> Target: ${l.domain}${l.path} | User-Agent: ${l.userAgent}`
+    ).join('\n');
+    
+    const prompt = `You are a Senior Cybersecurity Analyst and WAF specialist. Analyze the following Web Application Firewall logs. Identify any coordinated attacks, targeted endpoints, botnet behavior, or malicious patterns. Provide a concise executive summary, pinpoint the main threat vectors, and provide recommended mitigation strategies. Respond in professional formatting.\n\nLogs:\n${logData}`;
+
+    try {
+        const res = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+            contents: [{ parts: [{ text: prompt }] }]
+        });
+        aiReport.value = res.data.candidates[0].content.parts[0].text;
+        showAiModal.value = true;
+    } catch (e: any) {
+        console.error("AI Error:", e);
+        alert(`AI Analysis failed: ${e.response?.data?.error?.message || e.message}`);
+    } finally {
+        analyzingAi.value = false;
+    }
+}
+
 onMounted(() => {
     fetchLogs();
 });
@@ -283,10 +311,26 @@ const analyzeThreat = async () => {
     if (!selectedLog.value) return;
     aiLoading.value = true;
     try {
-        const res = await axios.post(`${API_URL}/ai/explain-threat`, selectedLog.value);
+        const payload = {
+            ip: selectedLog.value.ipAddress,
+            siteId: selectedLog.value.siteId || selectedLog.value.domain,
+            method: selectedLog.value.method,
+            path: selectedLog.value.path,
+            blocked: selectedLog.value.blocked,
+            status: selectedLog.value.statusCode,
+            timestamp: selectedLog.value.timestamp,
+            country: selectedLog.value.country
+        };
+        const res = await axios.post(`${API_URL}/ai/explain-threat`, payload);
         aiExplanation.value = res.data.explanation;
-    } catch (e) {
-        aiExplanation.value = "⚠️ **Connection Error:** Could not reach the NestJS AI Control Plane.";
+    } catch (e: any) {
+        if (e.response && e.response.status === 401) {
+            aiExplanation.value = "⚠️ **Authentication Expired:** Please log out and log back in to use AI Forensics.";
+        } else if (e.response && e.response.data?.message) {
+            aiExplanation.value = `⚠️ **API Error:** ${e.response.data.message}`;
+        } else {
+            aiExplanation.value = "⚠️ **Connection Error:** Could not reach the NestJS AI Control Plane.";
+        }
     } finally {
         aiLoading.value = false;
     }

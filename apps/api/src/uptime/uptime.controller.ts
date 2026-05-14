@@ -1,9 +1,9 @@
 import { Controller, Get, Param, Request, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UptimeService } from './uptime.service';
 
 @Controller('uptime')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class UptimeController {
     constructor(private readonly uptimeService: UptimeService) { }
 

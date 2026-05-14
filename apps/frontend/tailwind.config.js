@@ -5,7 +5,12 @@ export default {
         "./src/**/*.{vue,js,ts,jsx,tsx}",
     ],
     theme: {
-        extend: {},
+        extend: {
+            fontFamily: {
+                sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                mono: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+            }
+        },
     },
     plugins: [],
 }

@@ -391,6 +391,19 @@ const toggleAutoSsl = async () => {
         selectedSite.value.autoSslEnabled = newVal;
         const s = sites.value.find(s => s.id === selectedSite.value.id);
         if (s) s.autoSslEnabled = newVal;
+        
+        if (newVal) {
+            // Trigger SSL Generation asynchronously
+            axios.post(`${API_URL}/ssl/issue/${selectedSite.value.domain}`).then(res => {
+                if (res.data.success) {
+                    alert(`SSL Certificate successfully issued for ${selectedSite.value.domain}!`);
+                } else {
+                    alert(`Failed to issue SSL: ${res.data.message}`);
+                }
+            }).catch(e => {
+                alert(`Error communicating with Let's Encrypt for ${selectedSite.value.domain}. Make sure DNS points to this server.`);
+            });
+        }
     } catch (e) {
         console.error("Failed to toggle Auto SSL", e);
     }

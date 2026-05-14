@@ -15,6 +15,8 @@ import { Uptime } from './uptime/uptime.entity';
 import { AiModule } from './ai/ai.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { WafModule } from './waf/waf.module';
+import { WafRule } from './waf/waf-rule.entity';
 
 @Module({
     imports: [
@@ -28,7 +30,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
         TypeOrmModule.forRoot({
             type: 'postgres',
             url: process.env.DATABASE_URL || 'postgres://shield_user:shield_password@localhost:5432/shield_db',
-            entities: [Site, Analytics, User, FirewallRule, Uptime],
+            entities: [Site, Analytics, User, FirewallRule, Uptime, WafRule],
             synchronize: true, // Auto-create tables (dev only)
         }),
         SitesModule,
@@ -38,6 +40,8 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
         EventsModule,
         UptimeModule,
         AiModule,
+        WafModule,
+        SslModule,
     ],
     controllers: [],
     providers: [],
