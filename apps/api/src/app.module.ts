@@ -17,6 +17,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { WafModule } from './waf/waf.module';
 import { WafRule } from './waf/waf-rule.entity';
+import { SslModule } from './ssl/ssl.module';
 
 @Module({
     imports: [
