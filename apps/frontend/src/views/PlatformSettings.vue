@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 p-6 max-w-4xl">
+  <div class="space-y-4 md:space-y-6 max-w-4xl">
     <div>
       <h2 class="text-xl font-bold text-white flex items-center gap-3">
         <Settings class="w-5 h-5 text-orange-500" /> Platform Settings
@@ -46,7 +46,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
         <label class="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-zinc-900 transition-colors">
           <input type="checkbox" v-model="form.botProtection" class="accent-emerald-500" />
           <span class="text-xs text-zinc-300">Bot Protection</span>
@@ -94,12 +94,12 @@
       <h3 class="text-sm font-bold text-white border-b border-zinc-800 pb-2 flex items-center gap-2">
         <RefreshCw class="w-4 h-4 text-purple-500" /> Edge Cache Management
       </h3>
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
          <div>
             <p class="text-sm font-semibold text-zinc-300">Purge Everything</p>
             <p class="text-[10px] text-zinc-500 mt-1">Clear all cached static assets across the entire edge network immediately.</p>
          </div>
-         <button @click="purgeGlobalCache" class="px-4 py-2 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-colors rounded border border-purple-500/50 text-xs font-bold flex items-center gap-2" :disabled="purgingCache">
+         <button @click="purgeGlobalCache" class="px-4 py-2 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white transition-colors rounded border border-purple-500/50 text-xs font-bold flex items-center gap-2 shrink-0 self-start sm:self-auto" :disabled="purgingCache">
             <Loader2 v-if="purgingCache" class="w-3 h-3 animate-spin" />
             <RefreshCw v-else class="w-3 h-3" />
             {{ purgingCache ? 'Purging...' : 'Purge All Cache' }}

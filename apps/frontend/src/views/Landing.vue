@@ -1,31 +1,31 @@
 <template>
-  <div class="h-screen w-screen bg-[#020617] text-white font-mono overflow-y-auto selection:bg-blue-500/30">
+  <div class="min-h-screen w-full bg-[#020617] text-white font-mono overflow-y-auto overflow-x-hidden selection:bg-blue-500/30">
     
     <!-- Background Grid -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       <div class="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-20"></div>
     </div>
 
-    <div class="relative z-10 max-w-6xl mx-auto px-6 pt-8 pb-20">
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20">
       
       <!-- Navbar -->
-      <nav class="flex items-center justify-between mb-24 animate-in fade-in slide-in-from-top-4 duration-700">
+      <nav class="flex flex-wrap items-center justify-between gap-3 mb-16 sm:mb-24 animate-in fade-in slide-in-from-top-4 duration-700">
         <div class="flex items-center gap-3">
             <div class="p-2 border border-zinc-800 rounded-xl">
                 <Shield class="w-6 h-6 text-white" />
             </div>
-            <span class="text-xl font-bold tracking-wider text-white">
+            <span class="text-lg sm:text-xl font-bold tracking-wider text-white">
               SHIELD<span class="text-zinc-500">DOS</span>
             </span>
         </div>
-        <div class="flex items-center gap-4">
-            <a href="https://github.com/essex580/shielddos" target="_blank" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
-                <Github class="w-4 h-4" /> GitHub
+        <div class="flex flex-wrap items-center gap-2 justify-end">
+            <a href="https://github.com/essex580/shielddos" target="_blank" class="text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition-colors flex items-center gap-2 px-2 py-1.5">
+                <Github class="w-4 h-4" /> <span class="hidden sm:inline">GitHub</span>
             </a>
-            <button v-if="isDemoMode" @click="$emit('enter-preview')" class="px-5 py-2 text-sm font-bold border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white rounded-md transition-colors">
+            <button v-if="isDemoMode" @click="$emit('enter-preview')" class="px-3 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-bold border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white rounded-md transition-colors">
                 Preview Dashboard
             </button>
-            <button @click="$emit('go-to-login')" class="px-5 py-2 text-sm font-bold bg-white hover:bg-zinc-200 text-black rounded-md transition-colors flex items-center gap-2">
+            <button @click="$emit('go-to-login')" class="px-3 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-bold bg-white hover:bg-zinc-200 text-black rounded-md transition-colors flex items-center gap-2">
                 Login <ArrowRight class="w-4 h-4" />
             </button>
         </div>
@@ -35,7 +35,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto mb-32 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150 fill-mode-both">
         
         <!-- Globe on the Left -->
-        <div class="order-2 lg:order-1 relative w-full h-[350px] lg:h-[450px] pointer-events-none flex items-center justify-center">
+        <div class="order-2 lg:order-1 relative w-full h-[260px] sm:h-[350px] lg:h-[450px] pointer-events-none flex items-center justify-center">
            <NetworkGlobe :attacks="[]" :simulate="true" />
         </div>
 

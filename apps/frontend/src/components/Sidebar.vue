@@ -1,5 +1,8 @@
 <template>
-  <aside class="w-[280px] bg-[color:var(--sidebar-bg)] border-r border-[color:var(--border-color)] text-[color:var(--text-muted)] flex flex-col h-full font-sans text-sm shadow-[4px_0_24px_rgba(0,0,0,0.1)] z-40 relative transition-colors">
+  <aside
+    class="fixed lg:static inset-y-0 left-0 z-50 w-[280px] max-w-[85vw] bg-[color:var(--sidebar-bg)] border-r border-[color:var(--border-color)] text-[color:var(--text-muted)] flex flex-col h-full font-sans text-sm shadow-[4px_0_24px_rgba(0,0,0,0.1)] transition-transform duration-300 ease-in-out lg:translate-x-0"
+    :class="open ? 'translate-x-0' : '-translate-x-full'"
+  >
     <div class="p-6 flex items-center space-x-3 border-b border-[#1a1a1a] bg-[#050505]">
       <ShieldCheck class="w-8 h-8 text-[#f6821f] drop-shadow-[0_0_8px_rgba(246,130,31,0.5)]" />
       <div>
@@ -84,6 +87,7 @@ const isDark = computed(() => currentTheme.value === 'dark');
 
 defineProps<{
   currentPage: string
+  open?: boolean
 }>()
 
 const username = ref('User');

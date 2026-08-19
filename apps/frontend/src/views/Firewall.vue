@@ -1,14 +1,14 @@
 <template>
-  <div class="p-6 space-y-6 max-w-full font-mono text-sm">
+  <div class="space-y-4 md:space-y-6 max-w-full font-mono text-sm">
     
-    <header class="flex justify-between items-end pb-4 border-b border-[color:var(--border-subtle)]">
+    <header class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end pb-4 border-b border-[color:var(--border-subtle)]">
       <div>
         <h2 class="text-xl font-bold text-[color:var(--text-main)] flex items-center gap-3">
           <ShieldAlert class="w-5 h-5 text-red-500" /> Web Application Firewall
         </h2>
         <p class="text-[color:var(--text-muted)] mt-1 text-xs">Manage custom firewall rules and rate limits across the edge network.</p>
       </div>
-      <button @click="showCreateModal = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2">
+      <button @click="showCreateModal = true" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 shrink-0 self-start sm:self-auto">
         <Plus class="w-4 h-4" /> Create Rule
       </button>
     </header>
@@ -25,7 +25,7 @@
             <p class="text-xs mt-1">Traffic is only filtered by global bot protection and rate limits.</p>
         </div>
 
-        <div v-for="rule in rules" :key="rule.id" class="terminal-card p-4 border border-[color:var(--border-subtle)] flex items-center justify-between transition-colors hover:border-[color:var(--border-color)]">
+        <div v-for="rule in rules" :key="rule.id" class="terminal-card p-4 border border-[color:var(--border-subtle)] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between transition-colors hover:border-[color:var(--border-color)]">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-lg bg-[color:var(--bg-surface)] border border-[color:var(--border-subtle)] flex items-center justify-center">
                     <Activity v-if="rule.action === 'block'" class="w-5 h-5 text-red-500" />
@@ -42,7 +42,7 @@
                 </div>
             </div>
             
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4 sm:gap-6 self-end sm:self-auto">
                 <div class="flex flex-col items-end">
                     <span class="text-[10px] uppercase tracking-wider text-[color:var(--text-muted)] font-bold mb-1">Action</span>
                     <span class="text-xs font-bold px-2 py-1 rounded" :class="{
@@ -75,7 +75,7 @@
                     <input v-model="newRule.name" type="text" placeholder="e.g. Block bad bots" class="w-full bg-[color:var(--bg-surface)] border border-[color:var(--border-subtle)] rounded-lg px-3 py-2.5 text-[color:var(--text-main)] focus:outline-none focus:border-blue-500 text-sm">
                 </div>
                 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-[color:var(--text-muted)] uppercase tracking-wider mb-2">Field</label>
                         <select v-model="newRule.field" class="w-full bg-[color:var(--bg-surface)] border border-[color:var(--border-subtle)] rounded-lg px-3 py-2.5 text-[color:var(--text-main)] focus:outline-none focus:border-blue-500 text-sm">

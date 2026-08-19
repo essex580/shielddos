@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full flex flex-col p-6 space-y-6">
-    <div class="flex items-center justify-between">
+  <div class="h-full flex flex-col space-y-4 md:space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
           <ShieldAlert class="w-6 h-6 text-red-500" />
@@ -10,8 +10,8 @@
       </div>
 
       <!-- Actions -->
-      <div class="flex items-center gap-3">
-        <button @click="performAiAnalysis" :disabled="analyzingAi" class="terminal-button border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center gap-2 text-xs font-bold px-4 py-2 rounded">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <button @click="performAiAnalysis" :disabled="analyzingAi" class="terminal-button border-emerald-500/50 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center justify-center gap-2 text-xs font-bold px-4 py-2 rounded w-full sm:w-auto">
             <Sparkles v-if="!analyzingAi" class="w-4 h-4" />
             <Loader2 v-else class="w-4 h-4 animate-spin" />
             {{ analyzingAi ? 'Analyzing Traffic...' : 'AI Threat Analysis' }}
@@ -136,7 +136,7 @@
     <Teleport to="body">
       <div v-if="selectedLog" class="fixed inset-0 z-50 overflow-hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="closeDrawer"></div>
-        <div class="fixed inset-y-0 right-0 w-[500px] flex">
+        <div class="fixed inset-y-0 right-0 w-full sm:w-[500px] max-w-full flex">
           <div class="h-full w-full bg-zinc-950 border-l border-zinc-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out font-mono">
             
             <div class="p-6 border-b border-zinc-800 flex justify-between items-start bg-zinc-900/30">

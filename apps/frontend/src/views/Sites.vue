@@ -1,13 +1,13 @@
 <template>
-  <div class="p-6 space-y-6 max-w-full font-mono text-sm">
-    <header class="flex justify-between items-end pb-4 border-b border-zinc-800">
+  <div class="space-y-4 md:space-y-6 max-w-full font-mono text-sm">
+    <header class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-end pb-4 border-b border-zinc-800">
       <div>
         <h2 class="text-xl font-bold text-white flex items-center gap-3">
           <Globe class="w-5 h-5 text-blue-500" /> Network Nodes
         </h2>
         <p class="text-zinc-500 mt-1 text-xs">Target domain configuration and firewall rules.</p>
       </div>
-      <button @click="showAddModal = true" class="terminal-button flex items-center gap-2 text-xs font-semibold">
+      <button @click="showAddModal = true" class="terminal-button flex items-center gap-2 text-xs font-semibold shrink-0 self-start sm:self-auto">
         <Plus class="w-3 h-3" /> Add Node
       </button>
     </header>
@@ -19,13 +19,14 @@
         <span class="text-xs">Loading data...</span>
       </div>
       
-      <table v-else class="w-full text-left text-xs font-mono">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full min-w-[640px] text-left text-xs font-mono">
         <thead class="bg-zinc-900/50 text-zinc-500 font-semibold border-b border-zinc-800 text-xs text-left">
           <tr>
             <th class="p-3 pl-4">Domain / Status</th>
-            <th class="p-3">Origin IP</th>
+            <th class="p-3 hidden md:table-cell">Origin IP</th>
             <th class="p-3">Protection</th>
-            <th class="p-3">Verification</th>
+            <th class="p-3 hidden md:table-cell">Verification</th>
             <th class="p-3 text-right pr-6">Controls</th>
           </tr>
         </thead>
@@ -39,7 +40,7 @@
                   {{ site.isActive ? 'Active' : 'Offline' }}
                 </div>
               </td>
-              <td class="p-3 text-zinc-500">
+              <td class="p-3 text-zinc-500 hidden md:table-cell">
                 <div v-for="(origin, i) in site.targetIp" :key="i" class="flex items-center gap-2 mb-1">
                     <span class="px-1.5 py-0.5 rounded bg-zinc-800 text-[9px] font-bold text-zinc-400">{{ origin.region }}</span>
                     <span>{{ origin.ip }}</span>
@@ -55,7 +56,7 @@
                   </div>
                 </div>
               </td>
-              <td class="p-3">
+              <td class="p-3 hidden md:table-cell">
                  <div v-if="site.verificationStatus" class="flex flex-col gap-1">
                     <div class="text-[10px] font-semibold flex items-center gap-1" :class="site.verificationStatus.isConfigured ? 'text-green-500' : 'text-red-500'">
                       <span v-if="site.verificationStatus.isConfigured" class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
@@ -94,6 +95,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- New Offcanvas settings drawer -->

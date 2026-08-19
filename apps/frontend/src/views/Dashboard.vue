@@ -1,9 +1,9 @@
 <template>
-  <div class="p-6 space-y-6 max-w-full font-mono text-sm relative">
+  <div class="space-y-4 md:space-y-6 max-w-full font-mono text-sm relative">
     
     <!-- Live Event Toast -->
     <transition name="toast">
-      <div v-if="latestEvent" class="fixed top-20 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border bg-[color:var(--bg-panel)] backdrop-blur-md" :class="latestEvent.blocked ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]'">
+      <div v-if="latestEvent" class="fixed top-16 sm:top-20 left-3 right-3 sm:left-auto sm:right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-2xl border bg-[color:var(--bg-panel)] backdrop-blur-md max-w-full sm:max-w-md" :class="latestEvent.blocked ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]'">
         <div class="relative flex h-3 w-3">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" :class="latestEvent.blocked ? 'bg-red-400' : 'bg-emerald-400'"></span>
           <span class="relative inline-flex rounded-full h-3 w-3" :class="latestEvent.blocked ? 'bg-red-500' : 'bg-emerald-500'"></span>
@@ -14,7 +14,7 @@
         </div>
       </div>
     </transition>
-    <header class="flex justify-between items-end pb-4 border-b border-[color:var(--border-subtle)]">
+    <header class="flex flex-col gap-3 md:flex-row md:justify-between md:items-end pb-4 border-b border-[color:var(--border-subtle)]">
       <div>
         <h2 class="text-xl font-bold text-[color:var(--text-main)] flex items-center gap-3">
           <Activity class="w-5 h-5 text-blue-500" /> System Status
@@ -31,7 +31,7 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="terminal-card transition-transform duration-300" :class="{ 'scale-105 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]': statsFlash.total }">
+      <div class="terminal-card transition-transform duration-300 max-md:scale-100" :class="{ 'md:scale-105 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]': statsFlash.total }">
         <div class="flex items-center justify-between mb-4">
           <p class="text-[color:var(--text-muted)] text-xs font-semibold">Total Requests</p>
           <BarChart3 class="w-4 h-4 text-[color:var(--text-muted)]" />
@@ -40,7 +40,7 @@
         <span class="text-[color:var(--text-muted)] text-[10px] mt-2 block font-medium">Last 24h</span>
       </div>
       
-      <div class="terminal-card transition-transform duration-300" :class="{ 'scale-105 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]': statsFlash.blocked }">
+      <div class="terminal-card transition-transform duration-300 max-md:scale-100" :class="{ 'md:scale-105 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]': statsFlash.blocked }">
         <div class="flex items-center justify-between mb-4">
           <p class="text-[color:var(--text-muted)] text-xs font-semibold">Threats Blocked</p>
           <ShieldAlert class="w-4 h-4 text-[color:var(--text-muted)]" />
@@ -65,7 +65,7 @@
         <span class="text-[color:var(--text-muted)] text-[10px] mt-2 block font-medium">Proxy to Origin</span>
       </div>
       
-      <div class="terminal-card transition-transform duration-300" :class="{ 'scale-105 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]': statsFlash.unique }">
+      <div class="terminal-card transition-transform duration-300 max-md:scale-100" :class="{ 'md:scale-105 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]': statsFlash.unique }">
         <div class="flex items-center justify-between mb-4">
           <p class="text-[color:var(--text-muted)] text-xs font-semibold">Unique IPs</p>
           <Users class="w-4 h-4 text-[color:var(--text-muted)]" />
@@ -82,7 +82,7 @@
           <h3 class="font-bold text-[color:var(--text-main)] mb-2 flex items-center gap-2 text-[11px] uppercase tracking-wider border-b border-[color:var(--border-subtle)]/50 pb-2">
             <Globe class="w-3.5 h-3.5 text-blue-500" /> Threat Map
           </h3>
-          <div class="w-full h-[460px] bg-[color:var(--bg-panel)] rounded-lg overflow-hidden relative">
+          <div class="w-full h-[240px] sm:h-[320px] lg:h-[460px] bg-[color:var(--bg-panel)] rounded-lg overflow-hidden relative">
              <NetworkGlobe :attacks="liveAttacks" />
              <div class="absolute bottom-2 left-2 flex gap-3 text-[8px] font-mono select-none bg-[color:var(--bg-panel)] border border-[color:var(--border-subtle)] px-2 py-1 rounded">
                  <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Valid</div>
@@ -130,17 +130,17 @@
             <thead class="bg-[color:var(--bg-surface)] text-[color:var(--text-muted)] font-semibold border-b border-[color:var(--border-subtle)] text-[10px] uppercase tracking-wider sticky top-0">
               <tr>
                 <th class="px-3 py-2">Time</th>
-                <th class="px-3 py-2">Method</th>
+                <th class="px-3 py-2 hidden sm:table-cell">Method</th>
                 <th class="px-3 py-2">Path</th>
-                <th class="px-3 py-2">IP</th>
-                <th class="px-3 py-2">Country</th>
+                <th class="px-3 py-2 hidden md:table-cell">IP</th>
+                <th class="px-3 py-2 hidden sm:table-cell">Country</th>
                 <th class="px-3 py-2">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-zinc-800/50 text-[color:var(--text-muted)] relative">
               <tr v-for="log in paginatedLogs" :key="log.id" class="hover:bg-[color:var(--bg-surface)] transition-colors" :class="{ 'bg-zinc-800/80 animate-pulse border-l-2 border-blue-500': recentEventIds.has(log.id) }">
                 <td class="px-3 py-2 text-[color:var(--text-muted)] whitespace-nowrap">{{ new Date(log.timestamp).toLocaleTimeString([], {hour12:false}) }}</td>
-                <td class="px-3 py-2">
+                <td class="px-3 py-2 hidden sm:table-cell">
                     <span class="font-bold text-[10px] px-1.5 py-0.5 rounded" :class="{
                             'text-emerald-400 bg-emerald-500/10': log.method === 'GET',
                             'text-blue-400 bg-blue-500/10': log.method === 'POST',
@@ -149,8 +149,8 @@
                         }">{{ log.method }}</span>
                 </td>
                 <td class="px-3 py-2 text-[color:var(--text-main)] truncate max-w-[120px]" :title="log.path">{{ log.path }}</td>
-                <td class="px-3 py-2 text-[color:var(--text-muted)]">{{ log.ipAddress }}</td>
-                <td class="px-3 py-2 text-[color:var(--text-muted)]">{{ log.country || '—' }}</td>
+                <td class="px-3 py-2 text-[color:var(--text-muted)] hidden md:table-cell">{{ log.ipAddress }}</td>
+                <td class="px-3 py-2 text-[color:var(--text-muted)] hidden sm:table-cell">{{ log.country || '—' }}</td>
                 <td class="px-3 py-2">
                   <span v-if="log.blocked" class="text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded text-[10px] font-semibold">Blocked</span>
                   <span v-else class="font-semibold text-[10px] px-1.5 py-0.5 rounded" :class="log.statusCode >= 500 ? 'text-red-400 bg-red-500/10' : log.statusCode >= 400 ? 'text-amber-400 bg-amber-500/10' : 'text-emerald-400 bg-emerald-500/10'">{{ log.statusCode }}</span>

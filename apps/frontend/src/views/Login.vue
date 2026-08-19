@@ -1,12 +1,12 @@
 <template>
   <div class="flex items-center justify-center min-h-screen bg-[#000] text-sm">
-    <div class="w-full max-w-md p-10 border border-[#1a1a1a] bg-[#050505] rounded-3xl shadow-2xl relative">
-      <button @click="$emit('go-back')" class="absolute top-6 left-6 text-[#666] hover:text-white transition-colors" title="Back to Home">
+    <div class="w-full max-w-md mx-4 p-6 sm:p-10 border border-[#1a1a1a] bg-[#050505] rounded-3xl shadow-2xl relative">
+      <button @click="$emit('go-back')" class="absolute top-4 left-4 sm:top-6 sm:left-6 text-[#666] hover:text-white transition-colors" title="Back to Home">
           <ArrowLeft class="w-5 h-5" />
       </button>
       
       <div class="flex justify-center mb-8">
-        <ShieldCheck class="w-16 h-16 text-[#f6821f] drop-shadow-[0_0_12px_rgba(246,130,31,0.4)]" />
+        <ShieldCheck class="w-12 h-12 sm:w-16 sm:h-16 text-[#f6821f] drop-shadow-[0_0_12px_rgba(246,130,31,0.4)]" />
       </div>
       
       <div class="text-center mb-10">

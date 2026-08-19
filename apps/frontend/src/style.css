@@ -65,7 +65,7 @@
   .terminal-card {
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
-    @apply p-6 rounded-2xl;
+    @apply p-4 md:p-6 rounded-2xl;
     box-shadow: var(--card-shadow);
   }
 

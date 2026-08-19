@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto" @click.self="$emit('close')">
-    <div class="bg-zinc-950 border border-zinc-700 w-full max-w-md shadow-2xl rounded-xl transform transition-all flex flex-col max-h-full" role="dialog" aria-modal="true">
+    <div class="bg-zinc-950 border border-zinc-700 w-full max-w-md shadow-2xl rounded-xl transform transition-all flex flex-col max-h-[90vh]" role="dialog" aria-modal="true">
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-900/50 rounded-t-xl shrink-0">
         <h3 class="text-sm font-semibold text-white pl-2">
