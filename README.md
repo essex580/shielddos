@@ -158,6 +158,12 @@ To legally operate "Under Attack Mode" with Cloudflare Turnstile, you must navig
 Caching is evaluated dynamically. When traffic requests `.css, .js, .png, .jpg` assets, ShieldDOS automatically buffers the byte-stream into the Redis cluster. To evict this cache immediately upon deploying a monolithic front-end update, trigger the **Purge Edge Cache** macro in the Dashboard.
 
 ---
+
+## random
+
+Deploy test trigger.
+
+---
 <div align="center">
   <b>Built for Performance. Engineered for Security.</b><br>
   <i>Developed with ❤️ by Essex.</i>
