@@ -8,6 +8,7 @@ import PlatformSettings from './views/PlatformSettings.vue'
 import Firewall from './views/Firewall.vue'
 import Login from './views/Login.vue'
 import Landing from './views/Landing.vue'
+import { isDemoMode, enterDemoSession } from './demo/config'
 
 const currentPage = ref('dashboard')
 const isAuthenticated = ref(!!localStorage.getItem('access_token'))
@@ -18,9 +19,15 @@ const onLoginSuccess = () => {
     // Axios interceptor gets the token dynamically, no need to reload
 }
 
+const enterPreview = () => {
+    enterDemoSession()
+    isAuthenticated.value = true
+}
+
 const logout = () => {
     localStorage.removeItem('access_token')
     isAuthenticated.value = false
+    currentAuthView.value = 'landing'
 }
 
 onMounted(() => {
@@ -41,14 +48,17 @@ const currentView = computed(() => {
 
 <template>
   <div v-if="!isAuthenticated" class="h-screen w-screen bg-black overflow-hidden font-sans">
-      <Landing v-if="currentAuthView === 'landing'" @go-to-login="currentAuthView = 'login'" />
+      <Landing v-if="currentAuthView === 'landing'" @go-to-login="currentAuthView = 'login'" @enter-preview="enterPreview" />
       <Login v-else @login-success="onLoginSuccess" @go-back="currentAuthView = 'landing'" />
   </div>
 
   <div v-else class="flex h-screen bg-[color:var(--bg-main)] text-[color:var(--text-main)] font-sans text-sm selection:bg-[color:var(--accent)] selection:text-white transition-colors">
+    <div v-if="isDemoMode" class="fixed top-0 left-0 right-0 z-[100] bg-amber-500/10 border-b border-amber-500/30 text-amber-200 text-[10px] font-bold uppercase tracking-widest text-center py-1.5 pointer-events-none">
+      Preview Mode — simulated data
+    </div>
     <Sidebar :current-page="currentPage" @page="(p: string) => p === 'logout' ? logout() : currentPage = p" />
     
-    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[color:var(--bg-main)] flex flex-col relative transition-colors">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[color:var(--bg-main)] flex flex-col relative transition-colors" :class="{ 'pt-7': isDemoMode }">
       <header class="app-header shadow-2xl flex items-center justify-between px-8 py-5">
         <h2 class="text-xl font-bold tracking-tight capitalize">{{ currentPage.replace('_', ' ') }}</h2>
         <div class="flex items-center space-x-4">

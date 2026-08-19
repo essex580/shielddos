@@ -257,6 +257,8 @@ import { Line, Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement } from 'chart.js'
 import NetworkGlobe from '../components/NetworkGlobe.vue';
 import { getGeoCoordinates } from '../utils/geo';
+import { isDemoMode } from '../demo/config';
+import { createMockSocket, type MockSocket } from '../demo/mockSocket';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler, ArcElement)
 
@@ -287,7 +289,7 @@ const liveAttacks = ref<any[]>([]);
 
 const logs = ref<Log[]>([])
 const loading = ref(false)
-const socket = ref<Socket | null>(null)
+const socket = ref<Socket | MockSocket | null>(null)
 const latestEvent = ref<any>(null);
 const recentEventIds = ref<Set<string>>(new Set());
 let eventClearTimeout: any;
@@ -573,7 +575,11 @@ const flashStat = (key: 'total' | 'blocked' | 'unique') => {
 onMounted(() => {
     fetchData();
 
-    socket.value = io(API_URL);
+    if (isDemoMode) {
+        socket.value = createMockSocket();
+    } else {
+        socket.value = io(API_URL);
+    }
     
     socket.value.on('connect', () => {
         console.log('Connected to WebSocket');

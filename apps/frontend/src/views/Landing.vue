@@ -22,6 +22,9 @@
             <a href="https://github.com/essex580/shielddos" target="_blank" class="text-sm font-semibold text-zinc-400 hover:text-white transition-colors flex items-center gap-2">
                 <Github class="w-4 h-4" /> GitHub
             </a>
+            <button v-if="isDemoMode" @click="$emit('enter-preview')" class="px-5 py-2 text-sm font-bold border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-white rounded-md transition-colors">
+                Preview Dashboard
+            </button>
             <button @click="$emit('go-to-login')" class="px-5 py-2 text-sm font-bold bg-white hover:bg-zinc-200 text-black rounded-md transition-colors flex items-center gap-2">
                 Login <ArrowRight class="w-4 h-4" />
             </button>
@@ -132,6 +135,7 @@
 <script setup lang="ts">
 import { Shield, Github, ArrowRight, BrainCircuit, HardDrive, Lock, Zap, Globe, BarChart3, Terminal } from 'lucide-vue-next';
 import NetworkGlobe from '../components/NetworkGlobe.vue';
+import { isDemoMode } from '../demo/config';
 
-defineEmits(['go-to-login']);
+defineEmits(['go-to-login', 'enter-preview']);
 </script>

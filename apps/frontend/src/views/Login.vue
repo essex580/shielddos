@@ -48,6 +48,9 @@
       </div>
       
       <div class="mt-8 pt-6 border-t border-[#1a1a1a] text-center">
+        <p v-if="isDemoMode" class="text-[#666] text-[10px] mb-3 uppercase tracking-widest font-bold">
+          Preview credentials: demo / demo
+        </p>
         <p class="text-[#444] text-[9px] flex items-center justify-center gap-1.5 uppercase tracking-widest font-bold">
           <Lock class="w-3 h-3 text-[#f6821f]" /> AES-256 Encrypted Connection
         </p>
@@ -60,6 +63,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { ShieldCheck, Loader2, ShieldAlert, Lock, ArrowLeft } from 'lucide-vue-next';
+import { isDemoMode, enterDemoSession } from '../demo/config';
 
 const username = ref('')
 const password = ref('')
@@ -76,6 +80,16 @@ const authenticate = async () => {
   error.value = '';
   
   try {
+    if (isDemoMode) {
+      if (!username.value.trim() || !password.value.trim()) {
+        error.value = 'Please enter credentials';
+        return;
+      }
+      enterDemoSession();
+      emit('login-success');
+      return;
+    }
+
     const endpoint = isRegistering.value ? '/auth/register' : '/auth/login';
     const res = await axios.post(`${API_URL}${endpoint}`, {
       username: username.value,

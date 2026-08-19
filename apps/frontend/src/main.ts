@@ -2,6 +2,12 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import './style.css'
 import axios from 'axios'
+import { isDemoMode, isDemoToken } from './demo/config'
+import { setupDemoApi } from './demo/mockApi'
+
+if (isDemoMode) {
+    setupDemoApi(axios)
+}
 
 // Global Axios Interceptor
 axios.interceptors.request.use(config => {
@@ -16,7 +22,7 @@ axios.interceptors.request.use(config => {
 axios.interceptors.response.use(response => response, error => {
     const isAuthEndpoint = error.config && error.config.url && (error.config.url.includes('/auth/login') || error.config.url.includes('/auth/register'));
 
-    if (error.response && error.response.status === 401 && !isAuthEndpoint) {
+    if (error.response && error.response.status === 401 && !isAuthEndpoint && !isDemoToken()) {
         localStorage.removeItem('access_token');
         window.dispatchEvent(new Event('auth-expired'));
     }
